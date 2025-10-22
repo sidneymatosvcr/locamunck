@@ -9,12 +9,12 @@
     <!-- Inter Font -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body { 
-            font-family: 'Inter', sans-serif; 
+        body {
+            font-family: 'Inter', sans-serif;
             background-color: #f0f4f8; /* Fundo cinza claro */
         }
-        .card { 
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1); 
+        .card {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
             transition: transform 0.3s ease;
         }
         /* AZUL PREDOMINANTE: Cor principal da Via Cristais */
@@ -66,7 +66,7 @@
         .modal-overlay {
             z-index: 1000;
         }
-        
+
         /* Estilos para campos desativados no modal de edição */
         #modalBody input:disabled, #modalBody select:disabled, #modalBody textarea:disabled {
             background-color: #f3f4f6; /* bg-gray-100 */
@@ -106,7 +106,7 @@
                     ID do Utilizador: <span id="userIdDisplay" class="font-mono text-xs bg-gray-100 p-1 rounded"></span>
                 </div>
             </div>
-            
+
             <!-- Barra de Navegação -->
             <nav class="bg-gray-50 rounded-b-lg">
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -131,12 +131,12 @@
         <!-- View de Registro -->
         <div id="view-registro" class="card bg-white p-6 rounded-lg shadow-lg">
             <h2 class="text-2xl font-semibold primary-blue mb-4">Novo Acionamento</h2>
-            
+
             <!-- NOVO BLOCO DE STATUS DO CAMINHÃO -->
             <div id="statusCaminhaoDisplay" class="hidden mb-6 p-4 bg-blue-50 border-l-4 border-blue-500 rounded-lg shadow-md">
                 <div class="flex items-start"> <!-- Alterado para items-start para alinhar com o topo -->
                     <svg class="w-6 h-6 text-blue-700 mr-3 flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    
+
                     <!-- ESTRUTURA MODIFICADA PARA SUPORTAR LISTA -->
                     <div class="flex-1">
                         <p class="text-sm font-medium text-blue-700" id="statusCaminhaoTitle">Status Atual do Caminhão:</p>
@@ -153,7 +153,8 @@
             <!-- FIM DO BLOCO DE STATUS -->
 
             <form id="formAcionamento">
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                 <!-- MODIFICAÇÃO: Ajustado grid para 5 colunas -->
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-6">
                     <!-- Data -->
                     <div>
                         <label for="data" class="block text-sm font-medium text-gray-700">Data do Acionamento</label>
@@ -178,8 +179,13 @@
                         <label for="chamadoGLPI" class="block text-sm font-medium text-gray-700">Chamado GLPI</label>
                         <input type="text" id="chamadoGLPI" name="chamadoGLPI" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-blue focus:ring-primary-blue p-2" placeholder="Ex: C0000000">
                     </div>
+                    <!-- NOVO CAMPO: OS Locamunck -->
+                    <div>
+                        <label for="osLocamunck" class="block text-sm font-medium text-gray-700">OS Locamunck</label>
+                        <input type="text" id="osLocamunck" name="osLocamunck" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-blue focus:ring-primary-blue p-2" placeholder="Opcional">
+                    </div>
                 </div>
-                
+
                 <!-- CAMPO: Observação -->
                 <div class="mt-6">
                     <label for="observacao" class="block text-sm font-medium text-gray-700">Observação (Opcional)</label>
@@ -210,7 +216,7 @@
                     </button>
                 </div>
             </div>
-            
+
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200 table-responsive">
                     <thead class="bg-gray-50">
@@ -219,7 +225,8 @@
                             <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Solicitante</th>
                             <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Local</th>
                             <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Motorista</th>
-                            <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Chamado</th>
+                            <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Chamado GLPI</th>
+                            <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">OS Locamunck</th> <!-- NOVA COLUNA -->
                             <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Km</th>
                             <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Horas</th>
                             <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Valor (R$)</th>
@@ -237,7 +244,7 @@
         <!-- View de Dashboard -->
         <div id="view-dashboard" class="card bg-white p-6 rounded-lg shadow-lg hidden">
             <h2 class="text-2xl font-semibold primary-blue mb-4">Dashboard de Custos e Análises</h2>
-            
+
             <!-- Resumo Financeiro (Período Filtrado) -->
             <div class="mb-8">
                 <h3 class="text-xl font-semibold text-gray-800 mb-3">Resumo Financeiro do Período (Mês Selecionado)</h3>
@@ -316,11 +323,11 @@
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
-            
+
             <div id="modalBody" class="p-5">
                 <!-- Conteúdo dinâmico aqui (OS ou Formulário de Edição) -->
             </div>
-            
+
             <div id="modalFooter" class="p-5 bg-gray-50 flex justify-end space-x-3">
                 <!-- Botões dinâmicos aqui -->
                 <button onclick="closeModal()" class="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 transition duration-150">Fechar</button>
@@ -379,7 +386,7 @@
             <div class="p-5">
                 <p class="text-sm text-gray-600 mb-4">Digite a senha para confirmar a exclusão permanente deste acionamento:</p>
                 <input type="password" id="passwordInput" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 p-2 mb-2" placeholder="Senha">
-                <p id="passwordError" class="text-xs text-red-600">Senha incorreta!</p> 
+                <p id="passwordError" class="text-xs text-red-600">Senha incorreta!</p>
             </div>
             <div class="p-5 bg-gray-50 flex justify-end space-x-3">
                 <button id="confirmPasswordDeleteBtn" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition duration-150 font-semibold">Confirmar Exclusão</button>
@@ -389,7 +396,7 @@
     </div>
 
 
-    <!-- 
+    <!--
       Bloco de configuração do Firebase REINSERIDO para testes locais.
       AVISO: Não exponha este ficheiro publicamente com estas chaves.
     -->
@@ -402,10 +409,10 @@
         messagingSenderId: "567670085107",
         appId: "1:567670085107:web:3a7f7f1aa7580184ad2e86"
       });
-    
+
       // 🔑 Identificador do app (pode usar o mesmo que o projectId)
       const __app_id = "locamunck-4604a";
-    
+
       // 🔐 Como o sistema usa login anônimo, deixe null
       const __initial_auth_token = null;
     </script>
@@ -415,7 +422,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, orderBy, serverTimestamp, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        
+
         // --- Variáveis de Estado ---
         let db, auth;
         let userId = null;
@@ -481,7 +488,7 @@
                 // Se forem do mesmo tipo (PP/PP ou SAU/SAU), ordena pelo número
                 const numA = parseInt(a.nome.substring(a.nome.indexOf(' ') + 1));
                 const numB = parseInt(b.nome.substring(b.nome.indexOf(' ') + 1));
-                
+
                 return numA - numB;
             }).map(l => ({nome: l.nome, cidade: l.cidade})); // Retorna apenas nome e cidade para o dropdown
         };
@@ -492,8 +499,8 @@
 
         // SOLICITANTES ATUALIZADOS com Trecho
         const SOLICITANTES = [
-            'Ramon Paixão - Trecho 1', 
-            'Roberto Faria - Trecho 2', 
+            'Ramon Paixão - Trecho 1',
+            'Roberto Faria - Trecho 2',
             'Sidiney Melo - Trecho 3'
         ];
 
@@ -546,7 +553,7 @@
             }
             // Usa __app_id se estiver disponível, senão usa um fallback seguro
             const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-            
+
             // MUDANÇA: Apontando para a coleção PÚBLICA (Colaborativa)
             // Todos os usuários (logados anonimamente) lerão e escreverão neste mesmo local.
             return collection(db, 'artifacts', appId, 'public', 'data', 'acionamentos');
@@ -560,7 +567,7 @@
             const selectLocal = document.getElementById('local');
             if (!selectLocal) return;
 
-            selectLocal.innerHTML = '<option value="" disabled selected>Selecione o Local</option>'; 
+            selectLocal.innerHTML = '<option value="" disabled selected>Selecione o Local</option>';
             LOCAIS.forEach(local => {
                 const displayValue = `${local.nome} - ${local.cidade}`;
                 const option = document.createElement('option');
@@ -619,7 +626,7 @@
 
         async function adicionarAcionamento(event) {
             event.preventDefault();
-            
+
             // A autenticação (isAuthReady) ainda é necessária para cumprir as regras de segurança (request.auth != null)
             if (!isAuthReady || !userId) {
                 console.error("Tentativa de adicionar acionamento sem autenticação pronta.");
@@ -631,7 +638,8 @@
             const solicitante = document.getElementById('solicitante').value;
             const local = document.getElementById('local').value;
             const chamadoGLPI = document.getElementById('chamadoGLPI').value;
-            const observacao = document.getElementById('observacao').value.trim() || null; 
+            const osLocamunck = document.getElementById('osLocamunck').value.trim() || null; // NOVO: Leitura do campo
+            const observacao = document.getElementById('observacao').value.trim() || null;
 
             // Adiciona validação de data para garantir que não é uma data futura ou inválida
             const inputDate = new Date(data);
@@ -639,7 +647,7 @@
                  showConfirmationModal('Data Inválida', 'Por favor, insira uma data de acionamento válida.', 'error');
                  return;
             }
-            
+
             // Ajusta a data para UTC para evitar problemas de fuso horário ao salvar no Firebase
             const utcDate = new Date(inputDate.getUTCFullYear(), inputDate.getUTCMonth(), inputDate.getUTCDate());
 
@@ -648,12 +656,13 @@
                 solicitante,
                 local,
                 motorista: null,
-                horas: null, 
-                km: null,     
+                horas: null,
+                km: null,
                 custoTotal: 0,
                 chamadoGLPI,
+                osLocamunck, // NOVO: Campo adicionado ao objeto a ser salvo
                 observacao,
-                status: STATUSES.ABERTO, 
+                status: STATUSES.ABERTO,
                 createdAt: serverTimestamp() // Essencial para a ordenação
             };
 
@@ -673,7 +682,7 @@
                 await addDoc(acionamentosRef, newAcionamento);
                 formAcionamento.reset();
                 document.getElementById('data').valueAsDate = new Date();
-                showNotificationModal(); 
+                showNotificationModal();
             } catch (error) {
                 console.error("Erro ao adicionar acionamento:", error);
                 showConfirmationModal('Erro ao Guardar', `Não foi possível guardar o acionamento: ${error.message}. Verifique as regras de segurança do Firestore.`, 'error');
@@ -695,7 +704,7 @@
                 showConfirmationModal('Erro ao Eliminar', `Não foi possível eliminar o registo: ${error.message}`, 'error');
             }
         }
-        
+
         async function executeAcionamentoUpdate(id, updatedData) {
             const originalAcionamento = acionamentosData.find(a => a.id === id);
             // MODIFICAÇÃO: Não permite editar se estiver Encerrado OU Cancelado
@@ -707,7 +716,7 @@
             try {
                 const acionamentosRef = getCollectionRef(); // Aponta para a coleção pública
                 if (!acionamentosRef) throw new Error("Referência da coleção não encontrada.");
-                
+
                 await updateDoc(doc(acionamentosRef, id), updatedData);
                 console.log(`Acionamento ${id} atualizado.`);
                 if (updatedData.status === STATUSES.ENCERRADO || updatedData.status === STATUSES.CANCELADO) {
@@ -738,52 +747,53 @@
                     return 'bg-gray-100 text-gray-800 border border-gray-300';
             }
         }
-        
+
         function renderAcionamentos(data) {
             let totalHoras = 0;
             let totalKm = 0;
             let totalGeral = 0;
-            
+
             const filteredData = data.filter(a => {
                 // Converte timestamp do Firestore para Date
                 const acionamentoDate = a.data?.toDate ? a.data.toDate() : (a.data ? new Date(a.data) : null);
                 if (!acionamentoDate) return false;
-                
+
                 // Converte a data do acionamento para YYYY-MM no fuso horário local (ou UTC se preferir)
                 // Vamos usar UTC para consistência com o filtro
                 const dateInUTC = new Date(acionamentoDate.getUTCFullYear(), acionamentoDate.getUTCMonth(), acionamentoDate.getUTCDate());
                 const acionamentoMonth = dateInUTC.toISOString().substring(0, 7);
-                
+
                 // Filtra pelo mês/ano atual do filtro
                 return acionamentoMonth === currentMonthFilter;
             });
-            
+
             let html = filteredData.map(acionamento => {
                 const acionamentoDate = acionamento.data.toDate ? acionamento.data.toDate() : new Date(acionamento.data);
                 const horasDisplay = acionamento.horas !== null ? (acionamento.horas).toFixed(2) : 'N/A';
                 const kmDisplay = acionamento.km !== null ? (acionamento.km).toFixed(1) : 'N/A';
                 const motoristaDisplay = acionamento.motorista || 'N/A';
-                
+                const osLocamunckDisplay = acionamento.osLocamunck || 'N/A'; // NOVO: Display para o campo
+
                 const custoTotal = calcularCustoTotal(acionamento.horas || 0, acionamento.km || 0);
-                
+
                 // Acumula os totais apenas dos itens filtrados
                 totalHoras += (acionamento.horas || 0) * HOUR_RATE;
                 totalKm += (acionamento.km || 0) * KM_RATE;
                 totalGeral += custoTotal;
-                
+
                 const status = acionamento.status || STATUSES.ABERTO;
                 const statusColor = getStatusColor(status);
-                
+
                 // MODIFICAÇÃO: Verifica se o status é final (Encerrado OU Cancelado)
                 const isFinalizado = status === STATUSES.ENCERRADO || status === STATUSES.CANCELADO;
-                
+
                 // MODIFICAÇÃO: Lógica dos botões de ação
                 let actionButtons = '';
                 if (isFinalizado) {
                     // Se Finalizado (Encerrado ou Cancelado), mostra Ver OS e Exclusão Final (com senha)
                     actionButtons = `
                         <button data-id="${acionamento.id}" data-action="viewOS" class="text-blue-600 hover:text-blue-900 transition duration-150" title="Ver OS">📄</button>
-                        <button data-id="${acionamento.id}" data-action="finalDelete" class="text-red-700 hover:text-red-900 transition duration-150" title="Excluir Definitivamente (Requer Senha)">❌</button> 
+                        <button data-id="${acionamento.id}" data-action="finalDelete" class="text-red-700 hover:text-red-900 transition duration-150" title="Excluir Definitivamente (Requer Senha)">❌</button>
                     `;
                 } else {
                     // Se Não Finalizado (Aberto ou Em Execução), mostra as opções normais
@@ -800,8 +810,9 @@
                         <td data-label="Data" class="py-2 px-4 whitespace-nowrap">${formatDate(acionamentoDate)}</td>
                         <td data-label="Solicitante" class="py-2 px-4 whitespace-nowrap">${acionamento.solicitante}</td>
                         <td data-label="Local" class="py-2 px-4 whitespace-nowrap">${acionamento.local}</td>
-                        <td data-label="Motorista" class="py-2 px-4 whitespace-nowrap">${motoristaDisplay}</td> 
-                        <td data-label="Chamado" class="py-2 px-4 whitespace-nowrap">${acionamento.chamadoGLPI}</td>
+                        <td data-label="Motorista" class="py-2 px-4 whitespace-nowrap">${motoristaDisplay}</td>
+                        <td data-label="Chamado GLPI" class="py-2 px-4 whitespace-nowrap">${acionamento.chamadoGLPI}</td>
+                        <td data-label="OS Locamunck" class="py-2 px-4 whitespace-nowrap">${osLocamunckDisplay}</td> <!-- NOVO TD -->
                         <td data-label="Km" class="py-2 px-4 whitespace-nowrap">${kmDisplay}</td>
                         <td data-label="Horas" class="py-2 px-4 whitespace-nowrap">${horasDisplay}</td>
                         <td data-label="Valor" class="py-2 px-4 whitespace-nowrap font-semibold">${formatCurrency(custoTotal)}</td>
@@ -811,8 +822,8 @@
                 `;
             }).join('');
 
-            listaAcionamentos.innerHTML = html || `<tr><td colspan="10" class="text-center py-4 text-gray-500">Nenhum acionamento encontrado para este mês.</td></tr>`;
-            
+            listaAcionamentos.innerHTML = html || `<tr><td colspan="11" class="text-center py-4 text-gray-500">Nenhum acionamento encontrado para este mês.</td></tr>`; // Ajustado colspan para 11
+
             // Atualiza os totais do PERÍODO (Mês selecionado)
             // Verificação de segurança para garantir que os elementos existem (só atualiza se estiver no dashboard)
             const totalHorasEl = document.getElementById('totalHoras');
@@ -821,7 +832,7 @@
                 document.getElementById('totalKm').textContent = formatCurrency(totalKm);
                 document.getElementById('totalGeral').textContent = formatCurrency(totalGeral);
             }
-            
+
             // Chama a renderização dos rankings (baseado nos dados filtrados)
             if (currentView === 'dashboard') {
                 renderDashboard(filteredData);
@@ -838,7 +849,7 @@
                 // MODIFICAÇÃO: Acionamentos cancelados não entram no cálculo de custo
                 if (acionamento.status !== STATUSES.CANCELADO) {
                     const custoTotal = calcularCustoTotal(acionamento.horas || 0, acionamento.km || 0);
-                    
+
                     totalHorasGeral += (acionamento.horas || 0) * HOUR_RATE;
                     totalKmGeral += (acionamento.km || 0) * KM_RATE;
                     totalGeralGeral += custoTotal;
@@ -865,7 +876,7 @@
             if (!rankingLocaisEl || !rankingSolicitantesEl) {
                 return;
             }
-            
+
             // MODIFICAÇÃO: Filtra dados cancelados ANTES de calcular os rankings
             const dataValida = data.filter(a => a.status !== STATUSES.CANCELADO);
 
@@ -915,7 +926,7 @@
 
             // 2. Verifica se a lista tem itens
             if (ativacoesEmExecucao.length > 0) {
-                
+
                 // 3. Define o Título (Singular ou Plural)
                 if (ativacoesEmExecucao.length === 1) {
                     titleElement.textContent = 'Status Atual do Caminhão:';
@@ -964,10 +975,10 @@
             currentView = view;
             document.querySelectorAll('.card').forEach(v => v.classList.add('hidden'));
             document.querySelectorAll('nav button').forEach(b => b.classList.remove('border-primary-blue', 'text-gray-700'));
-            
+
             const viewEl = document.getElementById(`view-${view}`);
             const tabEl = document.getElementById(`tab-${view}`);
-            
+
             if (viewEl) {
                 viewEl.classList.remove('hidden');
             }
@@ -993,12 +1004,12 @@
             if (event && event.target !== targetModal) return;
             targetModal.classList.add('hidden');
             targetModal.classList.remove('flex');
-            
+
             // Limpa campos específicos se for o modal de senha
             if (modalId === 'passwordModal') {
                  document.getElementById('passwordInput').value = '';
                  document.getElementById('passwordError').style.display = 'none';
-                 document.getElementById('deleteIdStorage').value = ''; 
+                 document.getElementById('deleteIdStorage').value = '';
             } else if (modalId === 'modal') {
                  modalBody.innerHTML = '';
                  modalFooter.innerHTML = '';
@@ -1016,10 +1027,10 @@
             const confirmModal = document.getElementById('confirmationModal');
             document.getElementById('confirmationModalTitle').textContent = title;
             document.getElementById('confirmationModalMessage').innerHTML = message;
-            
+
             const iconContainer = document.getElementById('confirmationModalIcon');
             const footer = document.getElementById('confirmationModalFooter');
-            
+
             let iconHtml = '';
             let confirmButtonClass = '';
             let confirmButtonText = 'Confirmar';
@@ -1038,7 +1049,7 @@
             }
 
             iconContainer.innerHTML = iconHtml;
-            
+
             if (type === 'error') {
                  footer.innerHTML = `<button onclick="closeModal(null, 'confirmationModal')" class="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 transition duration-150">OK</button>`;
             } else {
@@ -1051,7 +1062,7 @@
                         confirmButtonText = 'Sim, Encerrar';
                     }
                 }
-                
+
                 footer.innerHTML = `
                     <button id="confirmActionBtn" class="px-4 py-2 text-white rounded-md transition duration-150 font-semibold ${confirmButtonClass}">${confirmButtonText}</button>
                     <button onclick="closeModal(null, 'confirmationModal')" class="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 transition duration-150">Cancelar</button>
@@ -1071,21 +1082,21 @@
         // MODIFICAÇÃO: Função de conversão de DMS para Decimal
         // Agora extrai a direção (S/W) da própria string.
         function dmsToDecimal(dmsString) {
-            // Remove quaisquer caracteres não-numéricos/não-ponto do início/fim, 
+            // Remove quaisquer caracteres não-numéricos/não-ponto do início/fim,
             // exceto as letras de direção (N, S, E, W)
             const cleanedString = dmsString.trim().toUpperCase();
             // Divide a string por qualquer coisa que NÃO seja um dígito ou um ponto.
             // O .filter(Boolean) remove strings vazias que podem surgir (ex: "S" no final)
-            const parts = cleanedString.split(/[^\d\.]+/).filter(Boolean); 
-            
+            const parts = cleanedString.split(/[^\d\.]+/).filter(Boolean);
+
             if(parts.length < 3) {
                 console.warn(`Formato DMS inválido: ${dmsString}`);
                 return 0;
             }
-            
+
             const [degrees, minutes, seconds] = parts.map(parseFloat);
             let decimal = degrees + (minutes / 60) + (seconds / 3600);
-            
+
             // Verifica se a string original continha S (Sul) ou W (Oeste)
             if (cleanedString.includes('S') || cleanedString.includes('W')) {
                 decimal = -decimal;
@@ -1096,7 +1107,7 @@
         function renderLocalizacaoView() {
             const contentEl = document.getElementById('localizacaoContent');
             if (!contentEl) return; // Guarda de segurança
-            
+
             const pps = LOCAIS_GEOLOCALIZACAO.filter(l => l.nome.startsWith('PP'));
             const saus = LOCAIS_GEOLOCALIZACAO.filter(l => l.nome.startsWith('SAU'));
 
@@ -1107,11 +1118,11 @@
                     // MODIFICAÇÃO: Converte DMS para Decimal usando a função corrigida
                     const lat = dmsToDecimal(unit.latDMS);
                     const lon = dmsToDecimal(unit.lonDMS);
-                    
+
                     // MODIFICAÇÃO: Cria o link do Google Maps com as coordenadas (query=lat,lon)
                     // Este é o formato que abre o pino exato no mapa.
                     const mapLink = `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`;
-                    
+
                     html += `
                         <div class="bg-gray-50 p-4 rounded-lg border">
                             <p class="font-bold text-lg primary-blue">${unit.nome} - ${unit.cidade}</p>
@@ -1138,7 +1149,8 @@
             const custoTotal = calcularCustoTotal(horas, km);
             const status = acionamento.status || STATUSES.ABERTO;
             const observacao = acionamento.observacao || 'N/A';
-            
+            const osLocamunck = acionamento.osLocamunck || 'N/A'; // NOVO: Campo OS Locamunck
+
             // MODIFICAÇÃO: Se estiver cancelado, mostra a observação de forma mais proeminente e zera custos
             if (status === STATUSES.CANCELADO) {
                 return `[ACIONAMENTO CANCELADO]
@@ -1150,6 +1162,7 @@ Data: ${formatDate(dataAcionamento)}
 Solicitante: ${acionamento.solicitante}
 Local: ${acionamento.local}
 Chamado GLPI: ${acionamento.chamadoGLPI}
+OS Locamunck: ${osLocamunck}
 
 MOTIVO DO CANCELAMENTO:
 ${observacao}
@@ -1170,11 +1183,12 @@ Status Atual: ${status.toUpperCase()}
    Motorista: ${acionamento.motorista || 'N/A'}
    Local: ${acionamento.local}
    Chamado GLPI: ${acionamento.chamadoGLPI}
+   OS Locamunck: ${osLocamunck}
 
 2. DADOS DE CUSTO:
    Tempo de Serviço: ${(horas).toFixed(2)} Horas
    Km Deslocamento: ${(km).toFixed(1)} Km
-   
+
 3. CÁLCULO FINANCEIRO:
    Custo Horas (${formatCurrency(HOUR_RATE)}/h): ${formatCurrency(custoHoras)}
    Custo Km (${formatCurrency(KM_RATE)}/km): ${formatCurrency(custoKm)}
@@ -1209,7 +1223,7 @@ Status Atual: ${status.toUpperCase()}
                 document.body.appendChild(el);
                 el.select();
                 // Usando execCommand para garantir compatibilidade em iframes
-                document.execCommand('copy'); 
+                document.execCommand('copy');
                 document.body.removeChild(el);
                 const copyBtn = document.getElementById('copyOsBtn');
                 copyBtn.textContent = 'Copiado!';
@@ -1226,19 +1240,19 @@ Status Atual: ${status.toUpperCase()}
             const id = button.dataset.id;
             const acionamento = acionamentosData.find(a => a.id === id);
             if (!acionamento) return;
-            
+
             const originalStatus = acionamento.status || STATUSES.ABERTO;
             // MODIFICAÇÃO: Bloqueia se estiver Encerrado OU Cancelado
             if (originalStatus === STATUSES.ENCERRADO || originalStatus === STATUSES.CANCELADO) return;
 
             const dataAcionamento = acionamento.data.toDate ? acionamento.data.toDate() : new Date(acionamento.data);
-            
+
             // Converte a data do timestamp (que é UTC) para o formato YYYY-MM-DD local
             const dateValue = new Date(dataAcionamento.getTime() + dataAcionamento.getTimezoneOffset() * 60000).toISOString().substring(0, 10);
-            
+
             const solicitanteOptions = SOLICITANTES.map(s => `<option value="${s}" ${s === acionamento.solicitante ? 'selected' : ''}>${s}</option>`).join('');
             const localOptions = LOCAIS.map(l => `<option value="${l.nome} - ${l.cidade}" ${`${l.nome} - ${l.cidade}` === acionamento.local ? 'selected' : ''}>${l.nome} - ${l.cidade}</option>`).join('');
-            
+
             // MODIFICAÇÃO: O dropdown de status agora inclui "Cancelado" automaticamente
             const statusOptions = Object.values(STATUSES).map(s => `<option value="${s}" ${s === originalStatus ? 'selected' : ''}>${s}</option>`).join('');
 
@@ -1257,7 +1271,11 @@ Status Atual: ${status.toUpperCase()}
                         <div><label for="editHoras">Horas</label><input type="number" step="0.01" min="0" id="editHoras" value="${acionamento.horas !== null ? acionamento.horas.toFixed(2) : ''}" class="mt-1 block w-full rounded-md border-gray-300 p-2"></div>
                         <div><label for="editKm">Km</label><input type="number" step="0.1" min="0" id="editKm" value="${acionamento.km !== null ? acionamento.km.toFixed(1) : ''}" class="mt-1 block w-full rounded-md border-gray-300 p-2"></div>
                     </div>
-                    <div class="mt-4"><label for="editChamadoGLPI">Chamado GLPI</label><input type="text" id="editChamadoGLPI" value="${acionamento.chamadoGLPI}" required class="mt-1 block w-full rounded-md border-gray-300 p-2"></div>
+                    <!-- MODIFICAÇÃO: Adicionado campo OS Locamunck ao modal -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                        <div><label for="editChamadoGLPI">Chamado GLPI</label><input type="text" id="editChamadoGLPI" value="${acionamento.chamadoGLPI}" required class="mt-1 block w-full rounded-md border-gray-300 p-2"></div>
+                        <div><label for="editOsLocamunck">OS Locamunck</label><input type="text" id="editOsLocamunck" value="${acionamento.osLocamunck || ''}" class="mt-1 block w-full rounded-md border-gray-300 p-2"></div>
+                    </div>
                     <div class="mt-4"><label for="editObservacao">Observação</label><textarea id="editObservacao" rows="3" class="mt-1 block w-full rounded-md border-gray-300 p-2" placeholder="Descreva a atividade ou qualquer nota relevante...">${acionamento.observacao || ''}</textarea></div>
                 </form>
             `;
@@ -1265,7 +1283,7 @@ Status Atual: ${status.toUpperCase()}
             modalFooter.innerHTML = `<button id="saveEditBtn" class="px-4 py-2 bg-primary-blue text-white rounded-md">Guardar Alterações</button><button onclick="closeModal(null, 'modal')" class="px-4 py-2 bg-gray-300 rounded-md">Cancelar</button>`;
 
             // --- INÍCIO DA NOVA LÓGICA DE VALIDAÇÃO DO MODAL ---
-            
+
             // Referências aos campos do modal
             const editStatusSelect = document.getElementById('editStatus');
             const editMotoristaInput = document.getElementById('editMotorista');
@@ -1276,7 +1294,7 @@ Status Atual: ${status.toUpperCase()}
             // Função para alternar os campos com base no status
             const toggleFieldsBasedOnStatus = () => {
                 const selectedStatus = editStatusSelect.value;
-                
+
                 if (selectedStatus === STATUSES.CANCELADO) {
                     // Desativa campos de custo
                     editMotoristaInput.disabled = true;
@@ -1316,7 +1334,8 @@ Status Atual: ${status.toUpperCase()}
                 const editStatus = document.getElementById('editStatus').value;
                 const editObservacao = document.getElementById('editObservacao').value.trim();
                 const editMotorista = document.getElementById('editMotorista').value;
-                
+                const editOsLocamunck = document.getElementById('editOsLocamunck').value.trim() || null; // NOVO: Leitura do campo do modal
+
                 // 1. NOVA VALIDAÇÃO
                 if (editStatus === STATUSES.CANCELADO) {
                     if (!editObservacao) {
@@ -1330,7 +1349,7 @@ Status Atual: ${status.toUpperCase()}
                         return;
                     }
                 }
-                
+
                 const editDate = new Date(document.getElementById('editData').value);
                  if (isNaN(editDate.getTime())) {
                      showConfirmationModal('Data Inválida', 'Por favor, insira uma data de acionamento válida.', 'error');
@@ -1363,10 +1382,11 @@ Status Atual: ${status.toUpperCase()}
                     horas: horasValue,
                     km: kmValue,
                     chamadoGLPI: document.getElementById('editChamadoGLPI').value,
+                    osLocamunck: editOsLocamunck, // NOVO: Campo adicionado
                     observacao: editObservacao || null,
                     custoTotal: custoTotalValue,
                 };
-                
+
                 closeModal(); // Fecha o modal de edição imediatamente
 
                 // 3. NOVA LÓGICA DE CONFIRMAÇÃO (para Encerrar OU Cancelar)
@@ -1376,9 +1396,9 @@ Status Atual: ${status.toUpperCase()}
                 if (isFinalizing && !wasFinalized) {
                     const actionText = editStatus === STATUSES.ENCERRADO ? 'Encerrar' : 'Cancelar';
                     showConfirmationModal(
-                        `Confirmar ${actionText}?`, 
-                        `Ao ${actionText.toLowerCase()}, não poderá mais editar este acionamento. Deseja continuar?`, 
-                        'closure', 
+                        `Confirmar ${actionText}?`,
+                        `Ao ${actionText.toLowerCase()}, não poderá mais editar este acionamento. Deseja continuar?`,
+                        'closure',
                         () => executeAcionamentoUpdate(editId, updatedData)
                     );
                 } else {
@@ -1396,11 +1416,11 @@ Status Atual: ${status.toUpperCase()}
             if (!button) return;
             const id = button.dataset.id;
             const acionamento = acionamentosData.find(a => a.id === id);
-            
+
             // MODIFICAÇÃO: Só pode deletar se estiver "Aberto".
             if (acionamento && acionamento.status !== STATUSES.ABERTO) {
                  showConfirmationModal('Ação Bloqueada', 'Só é possível eliminar acionamentos com o status "Aberto". Acionamentos em execução, encerrados ou cancelados não podem ser eliminados.', 'error');
-                 return; 
+                 return;
             }
             showConfirmationModal('Confirmar Eliminação?', `Tem a certeza que deseja eliminar o acionamento para o chamado ${acionamento.chamadoGLPI}?`, 'delete', () => deleteAcionamento(id));
         }
@@ -1413,13 +1433,15 @@ Status Atual: ${status.toUpperCase()}
             const button = event.target.closest('[data-action="finalDelete"]');
             if (!button) return;
             const id = button.dataset.id;
-            
+
             // Armazena o ID no modal de senha e o exibe
             document.getElementById('deleteIdStorage').value = id;
             document.getElementById('passwordInput').value = ''; // Limpa o campo
             document.getElementById('passwordError').style.display = 'none'; // Esconde erro
             passwordModal.classList.remove('hidden');
             passwordModal.classList.add('flex');
+            // Foca no campo de senha
+            setTimeout(() => document.getElementById('passwordInput').focus(), 100);
         }
 
         // --- NOVA FUNÇÃO ---
@@ -1428,12 +1450,12 @@ Status Atual: ${status.toUpperCase()}
             const passwordInput = document.getElementById('passwordInput');
             const passwordError = document.getElementById('passwordError');
             const deleteId = document.getElementById('deleteIdStorage').value;
-            
+
             if (passwordInput.value === DELETE_PASSWORD) {
                 // Senha correta
                 closeModal(null, 'passwordModal');
                 // Chama a função de exclusão normal
-                deleteAcionamento(deleteId); 
+                deleteAcionamento(deleteId);
             } else {
                 // Senha incorreta
                 passwordError.style.display = 'block'; // Mostra a mensagem de erro
@@ -1454,10 +1476,11 @@ Status Atual: ${status.toUpperCase()}
                 const acionamentoMonth = dateInUTC.toISOString().substring(0, 7);
                 return acionamentoMonth === currentMonthFilter;
             });
-            
+
             if (filteredData.length === 0) return;
-            
-            const header = ["ID", "Data", "Solicitante", "Motorista", "Local", "Chamado GLPI", "Km", "Horas", "Custo Total (R$)", "Status", "Observação", "UserId"];
+
+            // MODIFICAÇÃO: Adicionado "OS Locamunck" ao cabeçalho
+            const header = ["ID", "Data", "Solicitante", "Motorista", "Local", "Chamado GLPI", "OS Locamunck", "Km", "Horas", "Custo Total (R$)", "Status", "Observação", "UserId"];
             const csvRows = filteredData.map(a => {
                 const acionamentoDate = a.data.toDate ? a.data.toDate() : new Date(a.data);
                 const custoTotal = calcularCustoTotal(a.horas, a.km);
@@ -1465,11 +1488,23 @@ Status Atual: ${status.toUpperCase()}
                 const kmValue = a.km !== null ? (a.km).toFixed(1).replace('.', ',') : '0,0';
                 const horasValue = a.horas !== null ? (a.horas).toFixed(2).replace('.', ',') : '0,00';
                 const custoTotalValue = custoTotal.toFixed(2).replace('.', ',');
-                
-                // No modo colaborativo, o 'userId' no CSV ainda se refere a quem ESTÁ LOGADO,
-                // não necessarily a quem criou o registo (a menos que guardemos isso).
-                // Para simplificar, mantemos o userId do usuário atual.
-                return [`"${a.id}"`, `"${formatDate(acionamentoDate)}"`, `"${a.solicitante}"`, `"${a.motorista || ''}"`, `"${a.local}"`, `"${a.chamadoGLPI}"`, `"${kmValue}"`, `"${horasValue}"`, `"${custoTotalValue}"`, `"${a.status}"`, `"${a.observacao || ''}"`, `"${userId}"`].join(';');
+
+                // MODIFICAÇÃO: Adicionado o valor de osLocamunck
+                return [
+                    `"${a.id}"`,
+                    `"${formatDate(acionamentoDate)}"`,
+                    `"${a.solicitante}"`,
+                    `"${a.motorista || ''}"`,
+                    `"${a.local}"`,
+                    `"${a.chamadoGLPI}"`,
+                    `"${a.osLocamunck || ''}"`, // Campo adicionado
+                    `"${kmValue}"`,
+                    `"${horasValue}"`,
+                    `"${custoTotalValue}"`,
+                    `"${a.status}"`,
+                    `"${a.observacao || ''}"`,
+                    `"${userId}"`
+                ].join(';');
             });
             // Adiciona o BOM para garantir que caracteres especiais (UTF-8) e vírgulas sejam lidos corretamente
             const csvContent = ["\uFEFF", header.join(';'), ...csvRows].join('\n');
@@ -1486,7 +1521,7 @@ Status Atual: ${status.toUpperCase()}
         // --------------------------
         // Lógica de Inicialização e Auth
         // --------------------------
-        
+
         async function initializeAppLogic() {
             // Adiciona log de debug
             if (typeof setLogLevel === 'function') {
@@ -1497,7 +1532,7 @@ Status Atual: ${status.toUpperCase()}
             const appId = typeof __app_id !== 'undefined' ? __app_id : null;
             let firebaseConfig = null;
             const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-            
+
             try {
                  // Tenta fazer o parse da configuração do Firebase se ela existir.
                 if (typeof __firebase_config !== 'undefined' && __firebase_config && __firebase_config !== "{}") {
@@ -1507,14 +1542,14 @@ Status Atual: ${status.toUpperCase()}
                 console.error("Erro ao fazer parse de __firebase_config:", e);
                 // Deixa firebaseConfig como null
             }
-            
+
             // Se a configuração não for encontrada ou estiver vazia/malformada, entra em MODO DE SIMULAÇÃO.
             if (!firebaseConfig || !firebaseConfig.projectId) {
                 console.warn("MODO DE SIMULAÇÃO ATIVADO: Configuração do Firebase não encontrada. Dados NÃO serão guardados.");
                 userId = 'local-user-test-id-' + (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 9));
                 userIdDisplay.textContent = userId.substring(0, 10) + '... (SIMULAÇÃO)';
                 isAuthReady = false; // Não está realmente autenticado no DB
-                
+
                 // Atualiza o botão para refletir o erro
                 if (submitButton) {
                     submitButton.textContent = 'Erro de Configuração';
@@ -1537,7 +1572,7 @@ Status Atual: ${status.toUpperCase()}
                         isAuthReady = true;
                         userIdDisplay.textContent = userId;
                         console.log(`SUCESSO AUTH: Utilizador autenticado: ${userId}`); // Log mais explícito
-                        
+
                         // Ativa o botão de submit APÓS a autenticação
                         if (submitButton) {
                             submitButton.disabled = false;
@@ -1546,7 +1581,7 @@ Status Atual: ${status.toUpperCase()}
 
                         if (!window.firestoreListenersAttached) {
                             // Passa o appId (que agora é o projectId) para o setup
-                            setupFirestoreListeners(appId); 
+                            setupFirestoreListeners(appId);
                             finalizeUI();
                             window.firestoreListenersAttached = true;
                         }
@@ -1604,16 +1639,16 @@ Status Atual: ${status.toUpperCase()}
 
             // MUDANÇA: Usa a função getCollectionRef() para garantir consistência
             // e apontar para a coleção pública.
-            const acionamentosRef = getCollectionRef(); 
+            const acionamentosRef = getCollectionRef();
             if (!acionamentosRef) {
                     console.error("Falha ao obter referência da coleção em setupFirestoreListeners");
                     return;
             }
-            
+
             // Removido o 'orderBy' da consulta inicial.
             // A ordenação será feita no cliente.
-            const q = query(acionamentosRef); 
-            
+            const q = query(acionamentosRef);
+
             onSnapshot(q, (snapshot) => {
                 // Mapeia os dados do Firestore para o array de estado
                 acionamentosData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -1631,10 +1666,10 @@ Status Atual: ${status.toUpperCase()}
                 // CHAMA A FUNÇÃO DE CÁLCULO GERAL (com todos os dados)
                 // É importante chamar isso antes de renderAcionamentos
                 renderTotaisGerais(acionamentosData);
-                
+
                 // NOVO: CHAMA A FUNÇÃO DE STATUS DO CAMINHÃO
                 renderStatusAtualCaminhao(acionamentosData);
-                
+
                 // Atualiza a UI se estiver numa das views que depende dos dados
                 // renderAcionamentos() irá calcular os totais do período filtrado
                 if (currentView === 'historico' || currentView === 'dashboard') {
@@ -1646,19 +1681,19 @@ Status Atual: ${status.toUpperCase()}
                 showConfirmationModal('Erro de Conexão', `Não foi possível carregar os dados em tempo real: ${error.message}. Se a mensagem mencionar um índice, verifique a consola do Firebase.`, 'error');
             });
         }
-        
+
         // --------------------------
         // Event Listeners
         // --------------------------
-        
+
         selectMonthFilter.addEventListener('change', (event) => {
             currentMonthFilter = event.target.value;
-            renderAcionamentos(acionamentosData); 
+            renderAcionamentos(acionamentosData);
         });
 
-        window.switchView = switchView; 
+        window.switchView = switchView;
         window.exportToCSV = exportToCSV;
-        window.onload = initializeAppLogic; 
+        window.onload = initializeAppLogic;
         formAcionamento.addEventListener('submit', adicionarAcionamento);
         window.closeModal = closeModal;
         window.showNotificationModal = showNotificationModal;
@@ -1676,7 +1711,18 @@ Status Atual: ${status.toUpperCase()}
         if (confirmPasswordDeleteBtn) {
             confirmPasswordDeleteBtn.addEventListener('click', checkPasswordAndDelete);
         }
-        
+
+        // NOVO: Listener para a tecla Enter no campo de senha
+        const passwordInput = document.getElementById('passwordInput');
+        if (passwordInput) {
+            passwordInput.addEventListener('keypress', function(event) {
+                if (event.key === 'Enter') {
+                    event.preventDefault(); // Impede o comportamento padrão (ex: submit de formulário)
+                    checkPasswordAndDelete();
+                }
+            });
+        }
+
     </script>
 </body>
 </html>
