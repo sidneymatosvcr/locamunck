@@ -1261,22 +1261,22 @@ Status Atual: ${status.toUpperCase()}
                 <form id="formEditAcionamento">
                     <input type="hidden" id="editId" value="${id}">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div><label for="editData">Data</label><input type="date" id="editData" value="${dateValue}" required class="mt-1 block w-full rounded-md border-gray-300 p-2"></div>
-                        <div><label for="editStatus">Status</label><select id="editStatus" required class="mt-1 block w-full rounded-md border-gray-300 p-2">${statusOptions}</select></div>
-                        <div><label for="editSolicitante">Solicitante</label><select id="editSolicitante" required class="mt-1 block w-full rounded-md border-gray-300 p-2">${solicitanteOptions}</select></div>
-                        <div><label for="editLocal">Local</label><select id="editLocal" required class="mt-1 block w-full rounded-md border-gray-300 p-2">${localOptions}</select></div>
+                        <div><label for="editData">Data</label><input type="date" id="editData" value="${dateValue}" required class="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-primary-blue focus:ring-primary-blue"></div>
+                        <div><label for="editStatus">Status</label><select id="editStatus" required class="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-primary-blue focus:ring-primary-blue">${statusOptions}</select></div>
+                        <div><label for="editSolicitante">Solicitante</label><select id="editSolicitante" required class="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-primary-blue focus:ring-primary-blue">${solicitanteOptions}</select></div>
+                        <div><label for="editLocal">Local</label><select id="editLocal" required class="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-primary-blue focus:ring-primary-blue">${localOptions}</select></div>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-                        <div><label for="editMotorista">Motorista</label><input type="text" id="editMotorista" value="${acionamento.motorista || ''}" required class="mt-1 block w-full rounded-md border-gray-300 p-2"></div>
-                        <div><label for="editHoras">Horas</label><input type="number" step="0.01" min="0" id="editHoras" value="${acionamento.horas !== null ? acionamento.horas.toFixed(2) : ''}" class="mt-1 block w-full rounded-md border-gray-300 p-2"></div>
-                        <div><label for="editKm">Km</label><input type="number" step="0.1" min="0" id="editKm" value="${acionamento.km !== null ? acionamento.km.toFixed(1) : ''}" class="mt-1 block w-full rounded-md border-gray-300 p-2"></div>
+                        <div><label for="editMotorista">Motorista</label><input type="text" id="editMotorista" value="${acionamento.motorista || ''}" required class="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-primary-blue focus:ring-primary-blue"></div>
+                        <div><label for="editHoras">Horas</label><input type="number" step="0.01" min="0" id="editHoras" value="${acionamento.horas !== null ? acionamento.horas.toFixed(2) : ''}" class="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-primary-blue focus:ring-primary-blue"></div>
+                        <div><label for="editKm">Km</label><input type="number" step="0.1" min="0" id="editKm" value="${acionamento.km !== null ? acionamento.km.toFixed(1) : ''}" class="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-primary-blue focus:ring-primary-blue"></div>
                     </div>
                     <!-- MODIFICAÇÃO: Adicionado campo OS Locamunck ao modal -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                        <div><label for="editChamadoGLPI">Chamado GLPI</label><input type="text" id="editChamadoGLPI" value="${acionamento.chamadoGLPI}" required class="mt-1 block w-full rounded-md border-gray-300 p-2"></div>
-                        <div><label for="editOsLocamunck">OS Locamunck</label><input type="text" id="editOsLocamunck" value="${acionamento.osLocamunck || ''}" class="mt-1 block w-full rounded-md border-gray-300 p-2"></div>
+                        <div><label for="editChamadoGLPI">Chamado GLPI</label><input type="text" id="editChamadoGLPI" value="${acionamento.chamadoGLPI}" required class="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-primary-blue focus:ring-primary-blue"></div>
+                        <div><label for="editOsLocamunck">OS Locamunck</label><input type="text" id="editOsLocamunck" value="${acionamento.osLocamunck || ''}" class="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-primary-blue focus:ring-primary-blue"></div>
                     </div>
-                    <div class="mt-4"><label for="editObservacao">Observação</label><textarea id="editObservacao" rows="3" class="mt-1 block w-full rounded-md border-gray-300 p-2" placeholder="Descreva a atividade ou qualquer nota relevante...">${acionamento.observacao || ''}</textarea></div>
+                    <div class="mt-4"><label for="editObservacao">Observação</label><textarea id="editObservacao" rows="3" class="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-primary-blue focus:ring-primary-blue" placeholder="Descreva a atividade ou qualquer nota relevante...">${acionamento.observacao || ''}</textarea></div>
                 </form>
             `;
 
