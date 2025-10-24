@@ -4,18 +4,50 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestão de Acionamentos Munck (Locamunck)</title>
+    
+    <!-- NOVO: Script de Modo Escuro (DEVE VIR PRIMEIRO DE TUDO) -->
+    <!-- CORREÇÃO: Movido para antes do script do Tailwind CDN -->
+    <script>
+        // Deteta o tema salvo ou a preferência do SO e aplica a classe 'dark' ao <html>
+        // ISTO TEM DE VIR ANTES DO TAILWIND CARREGAR, para que o JIT veja a classe 'dark'.
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+    <!-- FIM DO SCRIPT DE MODO ESCURO -->
+
+    <!-- NOVO: Configuração do Tailwind (DEVE VIR ANTES de carregar o script CDN) -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class', // Habilita a estratégia de classe para o modo escuro
+        }
+    </script>
+
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
     <!-- Inter Font -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- SCRIPT ANTIGO - REMOVIDO DESTA POSIÇÃO -->
+
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f0f4f8; /* Fundo cinza claro */
+            /* Cor de fundo agora é controlada pelo Tailwind no <main> */
         }
+        /* Aplica o 'color-scheme' para que o scrollbar e outros UIs do browser se adaptem */
+        html.dark {
+            color-scheme: dark;
+        }
+
+        /* Estilo base do card, agora com fundo escuro */
         .card {
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease;
+            transition: transform 0.3s ease, background-color 0.2s ease;
+            /* bg-white dark:bg-gray-800 será aplicado via Tailwind */
         }
         /* AZUL PREDOMINANTE: Cor principal da Via Cristais */
         .primary-blue {
@@ -41,8 +73,13 @@
                 border: 1px solid #e5e7eb;
                 border-radius: 0.5rem;
                 padding: 0.5rem;
-                background-color: white;
+                /* Cor de fundo escura para a tabela responsiva */
+                background-color: white; 
             }
+            html.dark #container-tabela-historico .table-responsive tr {
+                 background-color: #1f2937; /* dark:bg-gray-800 */
+            }
+
             /* Transforma células em blocos e alinha à direita */
             #container-tabela-historico .table-responsive td {
                 display: block;
@@ -77,6 +114,12 @@
             cursor: not-allowed;
             opacity: 0.7;
         }
+        html.dark #modalBody input:disabled, 
+        html.dark #modalBody select:disabled, 
+        html.dark #modalBody textarea:disabled {
+            background-color: #374151; /* dark:bg-gray-700 */
+        }
+
 
         /* Estilo para a mensagem de erro no modal de senha */
         #passwordError {
@@ -89,272 +132,296 @@
         }
     </style>
 </head>
-<body class="min-h-screen">
+<body class="bg-white dark:bg-gray-800"> <!-- Cor de fundo base -->
     <!-- Overlay de Carregamento -->
-    <div id="loadingOverlay" class="fixed inset-0 bg-white flex items-center justify-center z-50">
+    <div id="loadingOverlay" class="fixed inset-0 bg-white dark:bg-gray-900 flex items-center justify-center z-50">
         <div class="flex flex-col items-center">
-            <svg class="animate-spin -ml-1 mr-3 h-8 w-8 primary-blue" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <svg class="animate-spin -ml-1 mr-3 h-8 w-8 primary-blue dark:text-blue-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8
+ 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            <p class="mt-4 text-lg primary-blue">Carregando dados e autenticando...</p>
+            <p class="mt-4 text-lg primary-blue dark:text-blue-300">Carregando dados e autenticando...</p>
         </div>
     </div>
 
-    <!-- Container Principal do App -->
-    <div id="appContainer" class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8 hidden">
-        <header class="bg-white shadow rounded-lg mb-6">
-            <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center">
-                <div class="flex items-center space-x-4 mb-4 sm:mb-0">
-                    <img src="https://viacristais.com.br/wp-content/themes/viacristais/resources/images/logo-topo.png" alt="Logo Via Cristais" class="h-12" onerror="this.onerror=null;this.style.display='none';">
-                    <h1 class="text-2xl md:text-3xl font-bold primary-blue">
-                        Gestão de Acionamentos Munck - Locamunck
-                    </h1>
-                </div>
-                <div class="text-sm font-medium text-gray-500">
-                    ID do Utilizador: <span id="userIdDisplay" class="font-mono text-xs bg-gray-100 p-1 rounded"></span>
-                </div>
+    <!-- NOVO: Container Principal do App (Layout Flex) -->
+    <div id="appContainer" class="flex min-h-screen hidden">
+        
+        <!-- NOVO: Sidebar (Menus à Esquerda) -->
+        <!-- CORREÇÃO: Adicionado id="sidebar" para que o JS encontre os botões -->
+        <aside id="sidebar" class="w-64 flex-shrink-0 bg-white dark:bg-gray-800 shadow-lg flex flex-col z-10">
+            <!-- LOGO (Maior, no topo da sidebar) -->
+            <div class="p-6 flex justify-center border-b border-gray-200 dark:border-gray-700">
+                <img src="https://viacristais.com.br/wp-content/themes/viacristais/resources/images/logo-topo.png" alt="Logo Via Cristais" class="h-20" onerror="this.onerror=null;this.style.display='none';">
             </div>
 
-            <!-- Barra de Navegação -->
-            <nav class="bg-gray-50 rounded-b-lg">
-                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div class="flex space-x-4">
-                        <button onclick="switchView('registro')" id="tab-registro" class="py-3 px-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-primary-blue transition duration-150 ease-in-out">
-                            📝 Registo
-                        </button>
-                        <button onclick="switchView('historico')" id="tab-historico" class="py-3 px-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-primary-blue transition duration-150 ease-in-out">
-                            🕰️ Histórico
-                        </button>
-                        <button onclick="switchView('dashboard')" id="tab-dashboard" class="py-3 px-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-primary-blue transition duration-150 ease-in-out">
-                            📊 Dashboard
-                        </button>
-                        <button onclick="switchView('localizacao')" id="tab-localizacao" class="py-3 px-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-primary-blue transition duration-150 ease-in-out">
-                            📍 Localizações
-                        </button>
-                    </div>
-                </div>
+            <!-- Navegação (Menus) -->
+            <nav class="flex-1 flex flex-col space-y-2 p-4">
+                <button onclick="switchView('registro')" id="tab-registro" class="flex items-center space-x-3 w-full text-left px-4 py-3 rounded-lg font-medium transition duration-150 ease-in-out">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                    <span>📝 Registo</span>
+                </button>
+                <button onclick="switchView('historico')" id="tab-historico" class="flex items-center space-x-3 w-full text-left px-4 py-3 rounded-lg font-medium transition duration-150 ease-in-out">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <span>🕰️ Histórico</span>
+                </button>
+                <button onclick="switchView('dashboard')" id="tab-dashboard" class="flex items-center space-x-3 w-full text-left px-4 py-3 rounded-lg font-medium transition duration-150 ease-in-out">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2z"></path></svg>
+                    <span>📊 Dashboard</span>
+                </button>
+                <button onclick="switchView('localizacao')" id="tab-localizacao" class="flex items-center space-x-3 w-full text-left px-4 py-3 rounded-lg font-medium transition duration-150 ease-in-out">
+                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    <span>📍 Localizações</span>
+                </button>
             </nav>
-        </header>
 
-        <!-- View de Registro -->
-        <div id="view-registro" class="card bg-white p-6 rounded-lg shadow-lg">
-            <h2 class="text-2xl font-semibold primary-blue mb-4">Novo Acionamento</h2>
-
-            <!-- NOVO BLOCO DE STATUS DO CAMINHÃO -->
-            <div id="statusCaminhaoDisplay" class="hidden mb-6 p-4 bg-blue-50 border-l-4 border-blue-500 rounded-lg shadow-md">
-                <div class="flex items-start"> <!-- Alterado para items-start para alinhar com o topo -->
-                    <svg class="w-6 h-6 text-blue-700 mr-3 flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-
-                    <!-- ESTRUTURA MODIFICADA PARA SUPORTAR LISTA -->
-                    <div class="flex-1">
-                        <p class="text-sm font-medium text-blue-700" id="statusCaminhaoTitle">Status Atual do Caminhão:</p>
-                        <!-- Este DIV será preenchido pela função renderStatusAtualCaminhao -->
-                        <!-- Alterei as classes aqui para dar espaço entre os mini-cartões -->
-                        <div id="containerLocaisAtuais" class="mt-3 space-y-3">
-                            <!-- Conteúdo injetado via JS -->
-                        </div>
-                    </div>
-                    <!-- FIM DA ESTRUTURA MODIFICADA -->
-
-                </div>
-            </div>
-            <!-- FIM DO BLOCO DE STATUS -->
-
-            <form id="formAcionamento">
-                 <!-- MODIFICAÇÃO: Ajustado grid para 5 colunas -->
-                <div class="grid grid-cols-1 md:grid-cols-5 gap-6">
-                    <!-- Data -->
-                    <div>
-                        <label for="data" class="block text-sm font-medium text-gray-700">Data do Acionamento</label>
-                        <input type="date" id="data" name="data" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-blue focus:ring-primary-blue p-2">
-                    </div>
-                    <!-- Solicitante -->
-                    <div>
-                        <label for="solicitante" class="block text-sm font-medium text-gray-700">Solicitante</label>
-                        <select id="solicitante" name="solicitante" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-blue focus:ring-primary-blue p-2">
-                            <option value="" disabled selected>Selecione o Solicitante</option>
-                        </select>
-                    </div>
-                    <!-- Local -->
-                    <div>
-                        <label for="local" class="block text-sm font-medium text-gray-700">Local (Ponto - Cidade)</label>
-                        <select id="local" name="local" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-blue focus:ring-primary-blue p-2">
-                            <option value="" disabled selected>Selecione o Local</option>
-                        </select>
-                    </div>
-                     <!-- Chamado GLPI -->
-                     <div>
-                        <label for="chamadoGLPI" class="block text-sm font-medium text-gray-700">Chamado GLPI</label>
-                        <input type="text" id="chamadoGLPI" name="chamadoGLPI" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-blue focus:ring-primary-blue p-2" placeholder="Ex: C0000000">
-                    </div>
-                    <!-- NOVO CAMPO: OS Locamunck -->
-                    <div>
-                        <label for="osLocamunck" class="block text-sm font-medium text-gray-700">OS Locamunck</label>
-                        <input type="text" id="osLocamunck" name="osLocamunck" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-blue focus:ring-primary-blue p-2" placeholder="Opcional">
-                    </div>
-                </div>
-
-                <!-- CAMPO: Observação -->
-                <div class="mt-6">
-                    <label for="observacao" class="block text-sm font-medium text-gray-700">Observação (Opcional)</label>
-                    <textarea id="observacao" name="observacao" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-blue focus:ring-primary-blue p-2" placeholder="Descreva a atividade ou qualquer nota relevante..."></textarea>
-                </div>
-
-                <div class="mt-6 flex justify-end">
-                    <!-- Botão de Ação desativado até a autenticação estar pronta -->
-                    <button type="submit" id="submitButton" disabled class="w-full md:w-auto bg-primary-blue text-white py-2 px-6 rounded-md hover-dark-blue transition duration-150 ease-in-out font-semibold shadow-md disabled:bg-gray-400 disabled:cursor-not-allowed">
-                        Aguardando autenticação...
-                    </button>
-                </div>
-            </form>
-        </div>
-
-        <!-- View de Histórico (MODIFICADA) -->
-        <div id="view-historico" class="card bg-white p-6 rounded-lg shadow-lg hidden">
-            <!-- CABEÇALHO DA VIEW HISTÓRICO -->
-            <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-                <h2 class="text-2xl font-semibold primary-blue">Histórico de Acionamentos</h2>
-                
-                <div class="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4 items-center w-full md:w-auto">
-                    <!-- Filtro de Mês -->
-                    <div class="flex items-center w-full md:w-auto">
-                        <label for="selectMonthFilter" class="text-sm font-medium text-gray-700 mr-2">Mês:</label>
-                        <select id="selectMonthFilter" class="rounded-md border-gray-300 shadow-sm focus:border-primary-blue focus:ring-primary-blue p-2 text-sm w-full md:w-auto">
-                            <!-- Opções de meses serão preenchidas via JS -->
-                        </select>
-                    </div>
-
-                    <!-- NOVO: Toggle de Visualização (Cartões/Lista) -->
-                    <div class="flex rounded-md shadow-sm">
-                        <button id="btn-view-cards" onclick="toggleHistoricoView('cards')" class="toggle-btn relative inline-flex items-center px-3 py-2 rounded-l-md border border-gray-300 text-sm font-medium bg-primary-blue text-white">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
-                        </button>
-                        <button id="btn-view-lista" onclick="toggleHistoricoView('lista')" class="toggle-btn -ml-px relative inline-flex items-center px-3 py-2 rounded-r-md border border-gray-300 text-sm font-medium bg-white text-gray-600 hover:bg-gray-50">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg>
-                        </button>
-                    </div>
-                    
-                    <!-- Botão de Exportar -->
-                    <button onclick="exportToCSV()" class="bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition duration-150 ease-in-out font-semibold text-sm shadow-md flex items-center w-full md:w-auto justify-center">
-                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                        Exportar CSV
-                    </button>
-                </div>
-            </div>
-
-            <!-- Container para Visualização em CARTÕES -->
-            <!-- O ID 'listaAcionamentos' (com o listener) está neste div -->
-            <div id="listaAcionamentos" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- Cartões serão inseridos aqui via JS -->
-            </div>
-
-            <!-- Container para Visualização em LISTA (Tabela) -->
-            <div id="container-tabela-historico" class="overflow-x-auto hidden">
-                <table class="min-w-full divide-y divide-gray-200 table-responsive">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data</th>
-                            <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Solicitante</th>
-                            <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Local</th>
-                            <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Motorista</th>
-                            <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Chamado GLPI</th>
-                            <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">OS Locamunck</th>
-                            <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Km</th>
-                            <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Horas</th>
-                            <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Valor (R$)</th>
-                            <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                            <th class="py-3 px-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
-                        </tr>
-                    </thead>
-                    <!-- O listener de clique será adicionado a este TBody -->
-                    <tbody id="listaAcionamentosTabela" class="bg-white divide-y divide-gray-200">
-                        <!-- Linhas (TRs) serão inseridas aqui via JS -->
-                    </tbody>
-                </table>
+            <!-- NOVO: Toggle Modo Escuro -->
+            <div class="mt-auto p-4 border-t border-gray-200 dark:border-gray-700">
+                <button id="darkModeToggle" class="w-full flex items-center justify-center px-4 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition duration-150">
+                    <!-- Ícone Sol (Modo Claro) -->
+                    <svg id="icon-sun" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                    <!-- Ícone Lua (Modo Escuro) -->
+                    <svg id="icon-moon" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                    <span class="ml-2">Mudar Tema</span>
+                </button>
             </div>
             
-        </div>
-
-        <!-- View de Dashboard -->
-        <div id="view-dashboard" class="card bg-white p-6 rounded-lg shadow-lg hidden">
-            <h2 class="text-2xl font-semibold primary-blue mb-4">Dashboard de Custos e Análises</h2>
-
-            <!-- Resumo Financeiro (Período Filtrado) -->
-            <div class="mb-8">
-                <h3 class="text-xl font-semibold text-gray-800 mb-3">Resumo Financeiro do Período (Mês Selecionado)</h3>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="bg-yellow-50 p-4 rounded-lg border-l-4 border-yellow-500 shadow-md">
-                        <p class="text-sm font-medium text-yellow-600">Valor Total Horas</p>
-                        <p id="totalHoras" class="text-2xl font-bold text-gray-900 mt-1">R$ 0,00</p>
-                    </div>
-                    <div class="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500 shadow-md">
-                        <p class="text-sm font-medium text-blue-600">Valor Total Deslocamento</p>
-                        <p id="totalKm" class="text-2xl font-bold text-gray-900 mt-1">R$ 0,00</p>
-                    </div>
-                    <div class="bg-green-50 p-4 rounded-lg border-l-4 border-green-500 shadow-md">
-                        <p class="text-sm font-medium text-green-600">Total Período a Pagar</p>
-                        <p id="totalGeral" class="text-3xl font-extrabold text-green-800 mt-1">R$ 0,00</p>
-                    </div>
+            <!-- ID do Utilizador -->
+            <div class="p-4 text-center border-t border-gray-200 dark:border-gray-700">
+                <div class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                    ID do Utilizador: <span id="userIdDisplay" class="font-mono text-xs bg-gray-100 dark:bg-gray-700 p-1 rounded"></span>
                 </div>
             </div>
+        </aside>
 
-            <!-- NOVO: Resumo Financeiro Geral (Todos os Acionamentos) -->
-            <div class="mb-8 pt-4 border-t">
-                <h3 class="text-xl font-semibold text-gray-800 mb-3">Resumo Financeiro Geral (Todos os Acionamentos)</h3>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="bg-yellow-100 p-4 rounded-lg border-l-4 border-yellow-600 shadow-md">
-                        <p class="text-sm font-medium text-yellow-700">Valor Total Horas (Geral)</p>
-                        <p id="totalHorasGeral" class="text-2xl font-bold text-gray-900 mt-1">R$ 0,00</p>
-                    </div>
-                    <div class="bg-blue-100 p-4 rounded-lg border-l-4 border-blue-600 shadow-md">
-                        <p class="text-sm font-medium text-blue-700">Valor Total Deslocamento (Geral)</p>
-                        <p id="totalKmGeral" class="text-2xl font-bold text-gray-900 mt-1">R$ 0,00</p>
-                    </div>
-                    <div class="bg-green-100 p-4 rounded-lg border-l-4 border-green-600 shadow-md">
-                        <p class="text-sm font-medium text-green-700">Total Geral a Pagar (Geral)</p>
-                        <p id="totalGeralGeral" class="text-3xl font-extrabold text-green-800 mt-1">R$ 0,00</p>
-                    </div>
-                </div>
-            </div>
+        <!-- NOVO: Container do Conteúdo Principal (Scrollável) -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <!-- NOVO: Cabeçalho do Conteúdo (Apenas Título) -->
+            <header class="bg-white dark:bg-gray-800 shadow-sm p-4 z-0">
+                 <h1 class="text-2xl md:text-3xl font-bold primary-blue dark:text-gray-100">
+                    Gestão de Acionamentos Munck - Locamunck
+                </h1>
+            </header>
+            
+            <!-- Conteúdo Principal (onde as views são trocadas) -->
+            <!-- CORREÇÃO: Alterado bg-f0f4f8 para bg-gray-100 (cor padrão do Tailwind) -->
+            <main class="flex-1 overflow-y-auto p-6 bg-gray-100 dark:bg-gray-900">
+                <!-- View de Registro -->
+                <div id="view-registro" class="card bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
+                    <h2 class="text-2xl font-semibold primary-blue dark:text-blue-300 mb-4">Novo Acionamento</h2>
 
-            <!-- CORREÇÃO: Análise de Frequência (Baseada no Período) - Estrutura Restaurada -->
-            <div class="pt-4 border-t">
-                <h3 class="text-xl font-semibold text-gray-800 mb-3">Análise de Frequência (Período Selecionado)</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- Top Locais Solicitantes -->
-                    <div class="card bg-white p-4 rounded-lg shadow-md">
-                        <h4 class="text-lg font-medium primary-blue mb-2">Top Locais Solicitantes</h4>
-                        <div id="rankingLocais" class="space-y-2">
-                            <p class="text-gray-500 text-sm">Nenhum dado para o período.</p>
+                    <!-- NOVO BLOCO DE STATUS DO CAMINHÃO -->
+                    <div id="statusCaminhaoDisplay" class="hidden mb-6 p-4 bg-blue-50 dark:bg-blue-900 border-l-4 border-blue-500 dark:border-blue-700 rounded-lg shadow-md">
+                        <div class="flex items-start">
+                            <svg class="w-6 h-6 text-blue-700 dark:text-blue-300 mr-3 flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <div class="flex-1">
+                                <p class="text-sm font-medium text-blue-700 dark:text-blue-300" id="statusCaminhaoTitle">Status Atual do Caminhão:</p>
+                                <div id="containerLocaisAtuais" class="mt-3 space-y-3">
+                                    <!-- Conteúdo injetado via JS -->
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <!-- Top Solicitantes por Frequência -->
-                    <div class="card bg-white p-4 rounded-lg shadow-md">
-                        <h4 class="text-lg font-medium primary-blue mb-2">Top Solicitantes por Frequência</h4>
-                        <div id="rankingSolicitantes" class="space-y-2">
-                            <p class="text-gray-500 text-sm">Nenhum dado para o período.</p>
+                    <!-- FIM DO BLOCO DE STATUS -->
+
+                    <form id="formAcionamento">
+                        <div class="grid grid-cols-1 md:grid-cols-5 gap-6">
+                            <!-- Data -->
+                            <div>
+                                <label for="data" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Data do Acionamento</label>
+                                <input type="date" id="data" name="data" required class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 shadow-sm focus:border-primary-blue focus:ring-primary-blue p-2">
+                            </div>
+                            <!-- Solicitante -->
+                            <div>
+                                <label for="solicitante" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Solicitante</label>
+                                <select id="solicitante" name="solicitante" required class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 shadow-sm focus:border-primary-blue focus:ring-primary-blue p-2">
+                                    <option value="" disabled selected>Selecione o Solicitante</option>
+                                </select>
+                            </div>
+                            <!-- Local -->
+                            <div>
+                                <label for="local" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Local (Ponto - Cidade)</label>
+                                <select id="local" name="local" required class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 shadow-sm focus:border-primary-blue focus:ring-primary-blue p-2">
+                                    <option value="" disabled selected>Selecione o Local</option>
+                                </select>
+                            </div>
+                            <!-- Chamado GLPI -->
+                            <div>
+                                <label for="chamadoGLPI" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Chamado GLPI</label>
+                                <input type="text" id="chamadoGLPI" name="chamadoGLPI" required class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 shadow-sm focus:border-primary-blue focus:ring-primary-blue p-2" placeholder="Ex: C0000000">
+                            </div>
+                            <!-- OS Locamunck -->
+                            <div>
+                                <label for="osLocamunck" class="block text-sm font-medium text-gray-700 dark:text-gray-300">OS Locamunck</label>
+                                <input type="text" id="osLocamunck" name="osLocamunck" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 shadow-sm focus:border-primary-blue focus:ring-primary-blue p-2" placeholder="Opcional">
+                            </div>
+                        </div>
+
+                        <!-- CAMPO: Observação -->
+                        <div class="mt-6">
+                            <label for="observacao" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Observação (Opcional)</label>
+                            <textarea id="observacao" name="observacao" rows="3" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 shadow-sm focus:border-primary-blue focus:ring-primary-blue p-2" placeholder="Descreva a atividade ou qualquer nota relevante..."></textarea>
+                        </div>
+
+                        <div class="mt-6 flex justify-end">
+                            <button type="submit" id="submitButton" disabled class="w-full md:w-auto bg-primary-blue text-white py-2 px-6 rounded-md hover-dark-blue transition duration-150 ease-in-out font-semibold shadow-md disabled:bg-gray-400 disabled:cursor-not-allowed">
+                                Aguardando autenticação...
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- View de Histórico (MODIFICADA) -->
+                <div id="view-historico" class="card bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg hidden">
+                    <!-- CABEÇALHO DA VIEW HISTÓRICO -->
+                    <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+                        <h2 class="text-2xl font-semibold primary-blue dark:text-blue-300">Histórico de Acionamentos</h2>
+                        
+                        <div class="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4 items-center w-full md:w-auto">
+                            <!-- Filtro de Mês -->
+                            <div class="flex items-center w-full md:w-auto">
+                                <label for="selectMonthFilter" class="text-sm font-medium text-gray-700 dark:text-gray-300 mr-2">Mês:</label>
+                                <select id="selectMonthFilter" class="rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 shadow-sm focus:border-primary-blue focus:ring-primary-blue p-2 text-sm w-full md:w-auto">
+                                    <!-- Opções de meses serão preenchidas via JS -->
+                                </select>
+                            </div>
+
+                            <!-- Toggle de Visualização (Cartões/Lista) -->
+                            <div class="flex rounded-md shadow-sm">
+                                <button id="btn-view-cards" onclick="toggleHistoricoView('cards')" class="toggle-btn relative inline-flex items-center px-3 py-2 rounded-l-md border border-gray-300 dark:border-gray-600 text-sm font-medium bg-primary-blue text-white">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                                </button>
+                                <button id="btn-view-lista" onclick="toggleHistoricoView('lista')" class="toggle-btn -ml-px relative inline-flex items-center px-3 py-2 rounded-r-md border border-gray-300 dark:border-gray-600 text-sm font-medium bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg>
+                                </button>
+                            </div>
+                            
+                            <!-- Botão de Exportar -->
+                            <button onclick="exportToCSV()" class="bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition duration-150 ease-in-out font-semibold text-sm shadow-md flex items-center w-full md:w-auto justify-center">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                Exportar CSV
+                            </button>
                         </div>
                     </div>
-                </div>
-            </div>
-        </div> <!-- FIM CORRETO DA view-dashboard -->
 
-        <!-- NOVA VIEW DE LOCALIZAÇÃO -->
-        <div id="view-localizacao" class="card bg-white p-6 rounded-lg shadow-lg hidden">
-            <h2 class="text-2xl font-semibold primary-blue mb-4">Localização das Unidades (PPs e SAUs)</h2>
-            <div id="localizacaoContent" class="space-y-6">
-                <!-- Conteúdo será gerado via JS -->
-            </div>
-        </div>
-    </div> <!-- FIM CORRETO DA appContainer -->
+                    <!-- Container para Visualização em CARTÕES -->
+                    <div id="listaAcionamentos" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <!-- Cartões serão inseridos aqui via JS -->
+                    </div>
+
+                    <!-- Container para Visualização em LISTA (Tabela) -->
+                    <div id="container-tabela-historico" class="overflow-x-auto hidden">
+                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 table-responsive">
+                            <thead class="bg-gray-50 dark:bg-gray-700">
+                                <tr>
+                                    <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Data</th>
+                                    <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Solicitante</th>
+                                    <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Local</th>
+                                    <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Motorista</th>
+                                    <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Chamado GLPI</th>
+                                    <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">OS Locamunck</th>
+                                    <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Km</th>
+                                    <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Horas</th>
+                                    <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Valor (R$)</th>
+                                    <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
+                                    <th class="py-3 px-4 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="listaAcionamentosTabela" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                                <!-- Linhas (TRs) serão inseridas aqui via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- View de Dashboard -->
+                <div id="view-dashboard" class="card bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg hidden">
+                    <h2 class="text-2xl font-semibold primary-blue dark:text-blue-300 mb-4">Dashboard de Custos e Análises</h2>
+
+                    <!-- Resumo Financeiro (Período Filtrado) -->
+                    <div class="mb-8">
+                        <h3 class="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-3">Resumo Financeiro do Período (Mês Selecionado)</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div class="bg-yellow-50 dark:bg-gray-700 p-4 rounded-lg border-l-4 border-yellow-500 dark:border-yellow-600 shadow-md">
+                                <p class="text-sm font-medium text-yellow-600 dark:text-yellow-400">Valor Total Horas</p>
+                                <p id="totalHoras" class="text-2xl font-bold text-gray-900 dark:text-white mt-1">R$ 0,00</p>
+                            </div>
+                            <div class="bg-blue-50 dark:bg-gray-700 p-4 rounded-lg border-l-4 border-blue-500 dark:border-blue-600 shadow-md">
+                                <p class="text-sm font-medium text-blue-600 dark:text-blue-400">Valor Total Deslocamento</p>
+                                <p id="totalKm" class="text-2xl font-bold text-gray-900 dark:text-white mt-1">R$ 0,00</p>
+                            </div>
+                            <div class="bg-green-50 dark:bg-gray-700 p-4 rounded-lg border-l-4 border-green-500 dark:border-green-600 shadow-md">
+                                <p class="text-sm font-medium text-green-600 dark:text-green-400">Total Período a Pagar</p>
+                                <p id="totalGeral" class="text-3xl font-extrabold text-green-800 dark:text-green-300 mt-1">R$ 0,00</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Resumo Financeiro Geral (Todos os Acionamentos) -->
+                    <div class="mb-8 pt-4 border-t dark:border-gray-700">
+                        <h3 class="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-3">Resumo Financeiro Geral (Todos os Acionamentos)</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div class="bg-yellow-100 dark:bg-gray-700/50 p-4 rounded-lg border-l-4 border-yellow-600 shadow-md">
+                                <p class="text-sm font-medium text-yellow-700 dark:text-yellow-400">Valor Total Horas (Geral)</p>
+                                <p id="totalHorasGeral" class="text-2xl font-bold text-gray-900 dark:text-white mt-1">R$ 0,00</p>
+                            </div>
+                            <div class="bg-blue-100 dark:bg-gray-700/50 p-4 rounded-lg border-l-4 border-blue-600 shadow-md">
+                                <p class="text-sm font-medium text-blue-700 dark:text-blue-400">Valor Total Deslocamento (Geral)</p>
+                                <p id="totalKmGeral" class="text-2xl font-bold text-gray-900 dark:text-white mt-1">R$ 0,00</p>
+                            </div>
+                            <div class="bg-green-100 dark:bg-gray-700/50 p-4 rounded-lg border-l-4 border-green-600 shadow-md">
+                                <p class="text-sm font-medium text-green-700 dark:text-green-400">Total Geral a Pagar (Geral)</p>
+                                <p id="totalGeralGeral" class="text-3xl font-extrabold text-green-800 dark:text-green-300 mt-1">R$ 0,00</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Análise de Frequência (Baseada no Período) -->
+                    <div class="pt-4 border-t dark:border-gray-700">
+                        <h3 class="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-3">Análise de Frequência (Período Selecionado)</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Top Locais Solicitantes -->
+                            <div class="card bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md">
+                                <h4 class="text-lg font-medium primary-blue dark:text-blue-300 mb-2">Top Locais Solicitantes</h4>
+                                <div id="rankingLocais" class="space-y-2">
+                                    <p class="text-gray-500 dark:text-gray-400 text-sm">Nenhum dado para o período.</p>
+                                </div>
+                            </div>
+                            <!-- Top Solicitantes por Frequência -->
+                            <div class="card bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md">
+                                <h4 class="text-lg font-medium primary-blue dark:text-blue-300 mb-2">Top Solicitantes por Frequência</h4>
+                                <div id="rankingSolicitantes" class="space-y-2">
+                                    <p class="text-gray-500 dark:text-gray-400 text-sm">Nenhum dado para o período.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div> <!-- FIM DA view-dashboard -->
+
+                <!-- VIEW DE LOCALIZAÇÃO -->
+                <div id="view-localizacao" class="card bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg hidden">
+                    <h2 class="text-2xl font-semibold primary-blue dark:text-blue-300 mb-4">Localização das Unidades (PPs e SAUs)</h2>
+                    <div id="localizacaoContent" class="space-y-6">
+                        <!-- Conteúdo será gerado via JS -->
+                    </div>
+                </div>
+            </main> <!-- FIM do main (scrollável) -->
+        </div> <!-- FIM do container de conteúdo principal -->
+    </div> <!-- FIM do appContainer (flex) -->
+
+    <!--
+    ============================================================
+    MODAIS (Movidos para fora do appContainer para z-index)
+    ============================================================
+    -->
 
     <!-- Modal Genérico (Usado para Visualizar OS e Edição) -->
     <div id="modal" class="modal-overlay fixed inset-0 bg-gray-600 bg-opacity-75 hidden items-center justify-center p-4" onclick="closeModal(event)">
-        <div class="bg-white rounded-lg shadow-2xl w-full max-w-lg overflow-hidden" onclick="event.stopPropagation()">
-            <div class="p-5 border-b flex justify-between items-center">
-                <h3 id="modalTitle" class="text-xl font-semibold primary-blue">Título do Modal</h3>
-                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-full max-w-lg overflow-hidden" onclick="event.stopPropagation()">
+            <div class="p-5 border-b dark:border-gray-700 flex justify-between items-center">
+                <h3 id="modalTitle" class="text-xl font-semibold primary-blue dark:text-blue-300">Título do Modal</h3>
+                <button onclick="closeModal()" class="text-gray-400 dark:text-gray-300 hover:text-gray-600 dark:hover:text-gray-100">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
@@ -363,26 +430,25 @@
                 <!-- Conteúdo dinâmico aqui (OS ou Formulário de Edição) -->
             </div>
 
-            <div id="modalFooter" class="p-5 bg-gray-50 flex justify-end space-x-3">
-                <!-- Botões dinâmicos aqui -->
-                <button onclick="closeModal()" class="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 transition duration-150">Fechar</button>
+            <div id="modalFooter" class="p-5 bg-gray-50 dark:bg-gray-700/50 flex justify-end space-x-3">
+                <!-- Botões dinâmicos aqui (o botão Fechar padrão foi movido para o JS) -->
             </div>
         </div>
     </div>
 
     <!-- Modal de Notificação (Para sucesso no registro) -->
     <div id="notificationModal" class="modal-overlay fixed inset-0 bg-gray-600 bg-opacity-75 hidden items-center justify-center p-4" onclick="closeModal(event, 'notificationModal')">
-        <div class="bg-white rounded-lg shadow-2xl w-full max-w-sm overflow-hidden" onclick="event.stopPropagation()">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-full max-w-sm overflow-hidden" onclick="event.stopPropagation()">
             <div class="p-5 flex flex-col items-center">
                 <svg class="w-12 h-12 text-green-500 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                <h3 class="text-xl font-semibold text-gray-800 mb-2">Acionamento Registado!</h3>
-                <p class="text-center text-sm text-gray-600">
+                <h3 class="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-2">Acionamento Registado!</h3>
+                <p class="text-center text-sm text-gray-600 dark:text-gray-300">
                     O novo acionamento foi guardado com sucesso no status **Aberto**.
                     <br><br>
                     Por favor, verifique e complete os dados de Motorista, Horas e Km no separador **Histórico** para finalizar a OS.
                 </p>
             </div>
-            <div class="p-5 bg-gray-50 flex justify-center">
+            <div class="p-5 bg-gray-50 dark:bg-gray-700/50 flex justify-center">
                 <button onclick="closeModal(null, 'notificationModal'); switchView('historico')" class="px-4 py-2 bg-primary-blue text-white rounded-md hover-dark-blue transition duration-150 font-semibold">
                     Ir para Histórico
                 </button>
@@ -392,50 +458,52 @@
 
     <!-- Modal de Confirmação Genérico (para Encerramento e Deleção) -->
     <div id="confirmationModal" class="modal-overlay fixed inset-0 bg-gray-600 bg-opacity-75 hidden items-center justify-center p-4" onclick="closeModal(event, 'confirmationModal')">
-        <div class="bg-white rounded-lg shadow-2xl w-full max-w-sm overflow-hidden" onclick="event.stopPropagation()">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-full max-w-sm overflow-hidden" onclick="event.stopPropagation()">
             <div class="p-5 flex flex-col items-center">
                 <div id="confirmationModalIcon" class="mb-3">
                     <!-- Ícone dinâmico aqui -->
                 </div>
-                <h3 id="confirmationModalTitle" class="text-xl font-semibold text-gray-800 mb-2">Confirmar Ação?</h3>
-                <p id="confirmationModalMessage" class="text-center text-sm text-gray-600">
+                <h3 id="confirmationModalTitle" class="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-2">Confirmar Ação?</h3>
+                <p id="confirmationModalMessage" class="text-center text-sm text-gray-600 dark:text-gray-300">
                     <!-- Mensagem dinâmica aqui -->
                 </p>
             </div>
-            <div id="confirmationModalFooter" class="p-5 bg-gray-50 flex justify-center space-x-3">
+            <div id="confirmationModalFooter" class="p-5 bg-gray-50 dark:bg-gray-700/50 flex justify-center space-x-3">
                 <!-- Botões dinâmicos aqui -->
             </div>
         </div>
     </div>
 
-    <!-- NOVO: Modal de Senha para Exclusão Final -->
+    <!-- Modal de Senha para Exclusão Final -->
     <div id="passwordModal" class="modal-overlay fixed inset-0 bg-gray-600 bg-opacity-75 hidden items-center justify-center p-4" onclick="closeModal(event, 'passwordModal')">
-        <div class="bg-white rounded-lg shadow-2xl w-full max-w-sm overflow-hidden" onclick="event.stopPropagation()">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-full max-w-sm overflow-hidden" onclick="event.stopPropagation()">
             <input type="hidden" id="deleteIdStorage"> <!-- Armazena o ID a ser deletado -->
-            <div class="p-5 border-b flex justify-between items-center">
+            <div class="p-5 border-b dark:border-gray-700 flex justify-between items-center">
                 <h3 class="text-xl font-semibold text-red-700">Exclusão Definitiva</h3>
-                <button onclick="closeModal(null, 'passwordModal')" class="text-gray-400 hover:text-gray-600">
+                <button onclick="closeModal(null, 'passwordModal')" class="text-gray-400 dark:text-gray-300 hover:text-gray-600 dark:hover:text-gray-100">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
             <div class="p-5">
-                <p class="text-sm text-gray-600 mb-4">Digite a senha para confirmar a exclusão permanente deste acionamento:</p>
-                <input type="password" id="passwordInput" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 p-2 mb-2" placeholder="Senha">
+                <p class="text-sm text-gray-600 dark:text-gray-300 mb-4">Digite a senha para confirmar a exclusão permanente deste acionamento:</p>
+                <input type="password" id="passwordInput" class="block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 shadow-sm focus:border-red-500 focus:ring-red-500 p-2 mb-2" placeholder="Senha">
                 <p id="passwordError" class="text-xs text-red-600">Senha incorreta!</p>
             </div>
-            <div class="p-5 bg-gray-50 flex justify-end space-x-3">
+            <div class="p-5 bg-gray-50 dark:bg-gray-700/50 flex justify-end space-x-3">
                 <button id="confirmPasswordDeleteBtn" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition duration-150 font-semibold">Confirmar Exclusão</button>
-                <button onclick="closeModal(null, 'passwordModal')" class="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 transition duration-150">Cancelar</button>
+                <button onclick="closeModal(null, 'passwordModal')" class="px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-800 dark:text-gray-100 rounded-md hover:bg-gray-400 dark:hover:bg-gray-500 transition duration-150">Cancelar</button>
             </div>
         </div>
     </div>
 
 
     <!--
-      Bloco de configuração do Firebase REINSERIDO para testes locais.
-      AVISO: Não exponha este ficheiro publicamente com estas chaves.
+    ============================================================
+    SCRIPTS (No final do body)
+    ============================================================
     -->
     <script>
+      // Bloco de configuração do Firebase (sem alterações)
       const __firebase_config = JSON.stringify({
         apiKey: "AIzaSyBErspPmi6mAw4RouFBLjfyEy_1u7XLQDk",
         authDomain: "locamunck-4604a.firebaseapp.com",
@@ -444,11 +512,7 @@
         messagingSenderId: "567670085107",
         appId: "1:567670085107:web:3a7f7f1aa7580184ad2e86"
       });
-
-      // 🔑 Identificador do app (pode usar o mesmo que o projectId)
       const __app_id = "locamunck-4604a";
-
-      // 🔐 Como o sistema usa login anônimo, deixe null
       const __initial_auth_token = null;
     </script>
 
@@ -465,7 +529,7 @@
         let currentView = 'registro';
         let currentMonthFilter = new Date().toISOString().substring(0, 7); // yyyy-mm
         let isAuthReady = false;
-        let historicoViewMode = 'cards'; // NOVO: 'cards' ou 'lista'
+        let historicoViewMode = 'cards'; // 'cards' ou 'lista'
 
         // --------------------------
         // Constantes e Regras de Negócio
@@ -475,18 +539,18 @@
         const NOTIFICATION_EMAIL = 'sidney.matos@vinci@highways.com.br';
         const DELETE_PASSWORD = '020391'; // SENHA PARA EXCLUSÃO FINAL
 
-        // DEFINIÇÃO DOS STATUS (MANTIDA)
+        // DEFINIÇÃO DOS STATUS
         const STATUSES = {
             ABERTO: 'Aberto',
             EM_EXECUCAO: 'Em Execução',
             ENCERRADO: 'Encerrado',
-            CANCELADO: 'Cancelado' // NOVO STATUS
+            CANCELADO: 'Cancelado'
         };
 
-        // NOVA CONSTANTE COM DADOS DE GEOLOCALIZAÇÃO
+        // CONSTANTE COM DADOS DE GEOLOCALIZAÇÃO
         const LOCAIS_GEOLOCALIZACAO = [
             // SAUs
-            { nome: 'SAU 01', cidade: 'Cristalina', km: 'km 96', latDMS: '17 0 25.44 S', lonDMS: '47 17 20.44 W' }, // Longitude assumida baseada em proximidade
+            { nome: 'SAU 01', cidade: 'Cristalina', km: 'km 96', latDMS: '17 0 25.44 S', lonDMS: '47 17 20.44 W' },
             { nome: 'SAU 02', cidade: 'Cristalina', km: 'km 148', latDMS: '17 00 25.33 S', lonDMS: '47 13 22.33 W' },
             { nome: 'SAU 03', cidade: 'Paracatu', km: 'km 43', latDMS: '17 13 34.69 S', lonDMS: '46 51 39.05 W' },
             { nome: 'SAU 04', cidade: 'Paracatu', km: 'km 86', latDMS: '17 29 22.19 S', lonDMS: '46 36 22.51 W' },
@@ -511,29 +575,22 @@
         ];
 
 
-        // Função de ordenação: PP antes de SAU, e depois em ordem numérica
+        // Função de ordenação: PP antes de SAU
         const sortLocais = (locais) => {
             return locais.sort((a, b) => {
                 const isAPP = a.nome.startsWith('PP');
                 const isBPP = b.nome.startsWith('PP');
-
-                // PP vem antes de SAU
                 if (isAPP && !isBPP) return -1;
                 if (!isAPP && isBPP) return 1;
-
-                // Se forem do mesmo tipo (PP/PP ou SAU/SAU), ordena pelo número
                 const numA = parseInt(a.nome.substring(a.nome.indexOf(' ') + 1));
                 const numB = parseInt(b.nome.substring(b.nome.indexOf(' ') + 1));
-
                 return numA - numB;
-            }).map(l => ({nome: l.nome, cidade: l.cidade})); // Retorna apenas nome e cidade para o dropdown
+            }).map(l => ({nome: l.nome, cidade: l.cidade}));
         };
 
-        // LOCAIS para o Dropdown (apenas Nome e Cidade)
         const LOCAIS = sortLocais(LOCAIS_GEOLOCALIZACAO.map(l => ({nome: l.nome, cidade: l.cidade})));
 
-
-        // SOLICITANTES ATUALIZADOS com Trecho
+        // SOLICITANTES
         const SOLICITANTES = [
             'Ramon Paixão - Trecho 1',
             'Roberto Faria - Trecho 2',
@@ -547,9 +604,9 @@
         const appContainer = document.getElementById('appContainer');
         const userIdDisplay = document.getElementById('userIdDisplay');
         const formAcionamento = document.getElementById('formAcionamento');
-        const listaAcionamentos = document.getElementById('listaAcionamentos'); // Refere-se à GRELHA de Cartões
-        const containerTabelaHistorico = document.getElementById('container-tabela-historico'); // Refere-se ao container da Tabela
-        const listaAcionamentosTabela = document.getElementById('listaAcionamentosTabela'); // Refere-se ao TBODY da Tabela
+        const listaAcionamentos = document.getElementById('listaAcionamentos');
+        const containerTabelaHistorico = document.getElementById('container-tabela-historico');
+        const listaAcionamentosTabela = document.getElementById('listaAcionamentosTabela');
         const selectMonthFilter = document.getElementById('selectMonthFilter');
         const modal = document.getElementById('modal');
         const notificationModal = document.getElementById('notificationModal');
@@ -559,6 +616,11 @@
         const modalBody = document.getElementById('modalBody');
         const modalFooter = document.getElementById('modalFooter');
         const submitButton = document.getElementById('submitButton');
+        // NOVO: Elementos do Modo Escuro
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        const iconSun = document.getElementById('icon-sun');
+        const iconMoon = document.getElementById('icon-moon');
+
 
         // --------------------------
         // Funções Utilitárias
@@ -598,7 +660,6 @@
         function initializeLocaisDropdowns() {
             const selectLocal = document.getElementById('local');
             if (!selectLocal) return;
-
             selectLocal.innerHTML = '<option value="" disabled selected>Selecione o Local</option>';
             LOCAIS.forEach(local => {
                 const displayValue = `${local.nome} - ${local.cidade}`;
@@ -612,7 +673,6 @@
         function initializeSolicitantesDropdowns() {
             const selectSolicitante = document.getElementById('solicitante');
             if (!selectSolicitante) return;
-
             selectSolicitante.innerHTML = '<option value="" disabled selected>Selecione o Solicitante</option>';
             SOLICITANTES.forEach(solicitante => {
                 const option = document.createElement('option');
@@ -627,8 +687,6 @@
             const year = now.getFullYear();
             const month = now.getMonth();
             const options = [];
-
-            // Gera opções para os últimos 6 meses (incluindo o atual)
             for (let i = 0; i < 6; i++) {
                 const d = new Date(year, month - i, 1);
                 const value = d.toISOString().substring(0, 7);
@@ -639,6 +697,29 @@
             selectMonthFilter.value = currentMonthFilter;
         }
 
+        // NOVO: Função para inicializar o Toggle de Modo Escuro
+        function initializeDarkModeToggle() {
+            const updateIcons = (isDark) => {
+                if (isDark) {
+                    iconSun.classList.add('hidden');
+                    iconMoon.classList.remove('hidden');
+                } else {
+                    iconSun.classList.remove('hidden');
+                    iconMoon.classList.add('hidden');
+                }
+            };
+            
+            // Define o estado inicial do ícone
+            updateIcons(document.documentElement.classList.contains('dark'));
+
+            // Adiciona o listener de clique
+            darkModeToggle.addEventListener('click', () => {
+                const isDark = document.documentElement.classList.toggle('dark');
+                localStorage.theme = isDark ? 'dark' : 'light';
+                updateIcons(isDark);
+            });
+        }
+
         function finalizeUI() {
             const dataInput = document.getElementById('data');
             if (dataInput) {
@@ -647,8 +728,9 @@
             initializeLocaisDropdowns();
             initializeSolicitantesDropdowns();
             initializeMonthFilter();
+            initializeDarkModeToggle(); // Inicializa o botão de modo escuro
             loadingOverlay.style.display = 'none';
-            appContainer.style.display = 'block';
+            appContainer.style.display = 'flex'; // Alterado de 'block' para 'flex'
             switchView(currentView);
         }
 
@@ -658,28 +740,23 @@
 
         async function adicionarAcionamento(event) {
             event.preventDefault();
-
             if (!isAuthReady || !userId) {
                 console.error("Tentativa de adicionar acionamento sem autenticação pronta.");
                 showConfirmationModal('Erro de Autenticação', 'Sistema não autenticado. Recarregue a página e verifique a configuração do Firebase.', 'error');
                 return;
             }
-
             const data = document.getElementById('data').value;
             const solicitante = document.getElementById('solicitante').value;
             const local = document.getElementById('local').value;
             const chamadoGLPI = document.getElementById('chamadoGLPI').value;
             const osLocamunck = document.getElementById('osLocamunck').value.trim() || null;
             const observacao = document.getElementById('observacao').value.trim() || null;
-
             const inputDate = new Date(data);
             if (isNaN(inputDate.getTime())) {
                  showConfirmationModal('Data Inválida', 'Por favor, insira uma data de acionamento válida.', 'error');
                  return;
             }
-
             const utcDate = new Date(inputDate.getUTCFullYear(), inputDate.getUTCMonth(), inputDate.getUTCDate());
-
             const newAcionamento = {
                 data: utcDate,
                 solicitante,
@@ -694,17 +771,14 @@
                 status: STATUSES.ABERTO,
                 createdAt: serverTimestamp()
             };
-
             const acionamentosRef = getCollectionRef();
             if (!acionamentosRef) {
                 console.error("Falha ao obter referência da coleção. DB está nulo.");
                 showConfirmationModal('Modo de Simulação Ativo', 'A configuração do Firebase não foi encontrada. O acionamento NÃO foi guardado.', 'error');
                 return;
             };
-
             submitButton.disabled = true;
             submitButton.textContent = 'Guardando...';
-
             try {
                 await addDoc(acionamentosRef, newAcionamento);
                 formAcionamento.reset();
@@ -737,11 +811,9 @@
                 console.error("Tentativa de atualização bloqueada: OS já está finalizada (Encerrada ou Cancelada).");
                 return;
             }
-
             try {
                 const acionamentosRef = getCollectionRef();
                 if (!acionamentosRef) throw new Error("Referência da coleção não encontrada.");
-
                 await updateDoc(doc(acionamentosRef, id), updatedData);
                 console.log(`Acionamento ${id} atualizado.`);
                 if (updatedData.status === STATUSES.ENCERRADO || updatedData.status === STATUSES.CANCELADO) {
@@ -758,37 +830,38 @@
         // Funções de Renderização
         // --------------------------
 
+        // Funções de cor para Status (com modo escuro)
         function getStatusColor(status) {
             switch (status) {
                 case STATUSES.ABERTO:
-                    return 'bg-amber-100 text-amber-800 border border-amber-300';
+                    return 'bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-200 border border-amber-300 dark:border-amber-700';
                 case STATUSES.EM_EXECUCAO:
-                    return 'bg-blue-100 text-blue-800 border border-blue-300';
+                    return 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 border border-blue-300 dark:border-blue-700';
                 case STATUSES.ENCERRADO:
-                    return 'bg-green-100 text-green-800 border border-green-300';
+                    return 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 border border-green-300 dark:border-green-700';
                 case STATUSES.CANCELADO:
-                    return 'bg-red-100 text-red-800 border border-red-300';
+                    return 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 border border-red-300 dark:border-red-700';
                 default:
-                    return 'bg-gray-100 text-gray-800 border border-gray-300';
+                    return 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 border border-gray-300 dark:border-gray-600';
             }
         }
 
         function getStatusCardBorder(status) {
             switch (status) {
                 case STATUSES.ABERTO:
-                    return 'border-t-4 border-amber-400';
+                    return 'border-t-4 border-amber-400 dark:border-amber-500';
                 case STATUSES.EM_EXECUCAO:
-                    return 'border-t-4 border-blue-400';
+                    return 'border-t-4 border-blue-400 dark:border-blue-500';
                 case STATUSES.ENCERRADO:
-                    return 'border-t-4 border-green-400';
+                    return 'border-t-4 border-green-400 dark:border-green-500';
                 case STATUSES.CANCELADO:
-                    return 'border-t-4 border-red-400';
+                    return 'border-t-4 border-red-400 dark:border-red-500';
                 default:
-                    return 'border-t-4 border-gray-400';
+                    return 'border-t-4 border-gray-400 dark:border-gray-500';
             }
         }
 
-        // MODIFICAÇÃO: Função agora renderiza Cartões OU Lista
+        // Renderização de Acionamentos (Cartões ou Lista)
         function renderAcionamentos(data) {
             let totalHoras = 0;
             let totalKm = 0;
@@ -802,7 +875,6 @@
                 return acionamentoMonth === currentMonthFilter;
             });
 
-            // Lógica de cálculo (comum a ambas as visualizações)
             filteredData.forEach(acionamento => {
                 const custoTotal = calcularCustoTotal(acionamento.horas || 0, acionamento.km || 0);
                 totalHoras += (acionamento.horas || 0) * HOUR_RATE;
@@ -810,7 +882,6 @@
                 totalGeral += custoTotal;
             });
 
-            // Lógica de Renderização Condicional
             if (historicoViewMode === 'cards') {
                 const htmlCards = filteredData.map(acionamento => {
                     const acionamentoDate = acionamento.data.toDate ? acionamento.data.toDate() : new Date(acionamento.data);
@@ -824,73 +895,72 @@
                     const cardBorderClass = getStatusCardBorder(status);
                     const isFinalizado = status === STATUSES.ENCERRADO || status === STATUSES.CANCELADO;
 
-                    // Botões de ação (SVGs)
                     let actionButtons = '';
                     if (isFinalizado) {
                         actionButtons = `
-                            <button data-id="${acionamento.id}" data-action="viewOS" class="p-1 rounded-full text-blue-600 hover:text-blue-900 hover:bg-blue-50 transition duration-150" title="Ver OS">
+                            <button data-id="${acionamento.id}" data-action="viewOS" class="p-1 rounded-full text-blue-600 dark:text-blue-300 hover:text-blue-900 dark:hover:text-blue-100 hover:bg-blue-50 dark:hover:bg-gray-700 transition duration-150" title="Ver OS">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                             </button>
-                            <button data-id="${acionamento.id}" data-action="finalDelete" class="p-1 rounded-full text-red-600 hover:text-red-900 hover:bg-red-50 transition duration-150" title="Excluir Definitivamente (Requer Senha)">
+                            <button data-id="${acionamento.id}" data-action="finalDelete" class="p-1 rounded-full text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-200 hover:bg-red-50 dark:hover:bg-gray-700 transition duration-150" title="Excluir Definitivamente (Requer Senha)">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                             </button>
                         `;
                     } else {
                         actionButtons = `
-                            <button data-id="${acionamento.id}" data-action="viewOS" class="p-1 rounded-full text-blue-600 hover:text-blue-900 hover:bg-blue-50 transition duration-150" title="Ver OS">
+                            <button data-id="${acionamento.id}" data-action="viewOS" class="p-1 rounded-full text-blue-600 dark:text-blue-300 hover:text-blue-900 dark:hover:text-blue-100 hover:bg-blue-50 dark:hover:bg-gray-700 transition duration-150" title="Ver OS">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                             </button>
-                            <button data-id="${acionamento.id}" data-action="edit" class="p-1 rounded-full text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition duration-150" title="Editar Acionamento">
+                            <button data-id="${acionamento.id}" data-action="edit" class="p-1 rounded-full text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700 transition duration-150" title="Editar Acionamento">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                             </button>
-                            <button data-id="${acionamento.id}" data-action="delete" class="p-1 rounded-full text-red-600 hover:text-red-900 hover:bg-red-50 transition duration-150" title="Eliminar (Apenas Status Aberto)">
+                            <button data-id="${acionamento.id}" data-action="delete" class="p-1 rounded-full text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-200 hover:bg-red-50 dark:hover:bg-gray-700 transition duration-150" title="Eliminar (Apenas Status Aberto)">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                             </button>
                         `;
                     }
 
                     return `
-                        <div class="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col ${cardBorderClass}">
+                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden flex flex-col ${cardBorderClass}">
                             <!-- Card Header -->
                             <div class="p-4">
                                 <div class="flex justify-between items-start">
                                     <div>
                                         <span class="inline-flex items-center px-3 py-0.5 rounded-full text-xs font-medium ${statusColorClass}">${status}</span>
-                                        <p class="text-lg font-bold primary-blue mt-2">${acionamento.local}</p>
+                                        <p class="text-lg font-bold primary-blue dark:text-blue-300 mt-2">${acionamento.local}</p>
                                     </div>
                                     <div class="flex space-x-1 flex-shrink-0 ml-2">${actionButtons}</div>
                                 </div>
-                                <p class="text-sm text-gray-600 mt-1">GLPI: <span class="font-medium text-gray-800">${acionamento.chamadoGLPI}</span></p>
-                                <p class="text-sm text-gray-600">OS Locamunck: <span class="font-medium text-gray-800">${osLocamunckDisplay}</span></p>
+                                <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">GLPI: <span class="font-medium text-gray-800 dark:text-gray-100">${acionamento.chamadoGLPI}</span></p>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">OS Locamunck: <span class="font-medium text-gray-800 dark:text-gray-100">${osLocamunckDisplay}</span></p>
                             </div>
                             <!-- Card Body (Info) -->
-                            <div class="px-4 pb-4 border-t border-gray-100">
+                            <div class="px-4 pb-4 border-t border-gray-100 dark:border-gray-700">
                                 <div class="grid grid-cols-2 gap-x-4 gap-y-2 mt-3">
                                     <div>
-                                        <label class="text-xs text-gray-500">Solicitante</label>
-                                        <p class="text-sm font-medium text-gray-800">${acionamento.solicitante}</p>
+                                        <label class="text-xs text-gray-500 dark:text-gray-400">Solicitante</label>
+                                        <p class="text-sm font-medium text-gray-800 dark:text-gray-100">${acionamento.solicitante}</p>
                                     </div>
                                     <div>
-                                        <label class="text-xs text-gray-500">Motorista</label>
-                                        <p class="text-sm font-medium text-gray-800">${motoristaDisplay}</p>
+                                        <label class="text-xs text-gray-500 dark:text-gray-400">Motorista</label>
+                                        <p class="text-sm font-medium text-gray-800 dark:text-gray-100">${motoristaDisplay}</p>
                                     </div>
                                     <div>
-                                        <label class="text-xs text-gray-500">Data</label>
-                                        <p class="text-sm font-medium text-gray-800">${formatDate(acionamentoDate)}</p>
+                                        <label class="text-xs text-gray-500 dark:text-gray-400">Data</label>
+                                        <p class="text-sm font-medium text-gray-800 dark:text-gray-100">${formatDate(acionamentoDate)}</p>
                                     </div>
                                 </div>
                             </div>
                             <!-- Card Footer (Costs) -->
-                            <div class="bg-gray-50 px-4 py-3 mt-auto border-t">
+                            <div class="bg-gray-50 dark:bg-gray-700/50 px-4 py-3 mt-auto border-t dark:border-gray-700">
                                 <div class="flex justify-between items-center">
                                     <div>
-                                        <span class="text-xs text-gray-500">Km:</span> <span class="text-sm font-medium text-gray-800">${kmDisplay}</span>
+                                        <span class="text-xs text-gray-500 dark:text-gray-400">Km:</span> <span class="text-sm font-medium text-gray-800 dark:text-gray-100">${kmDisplay}</span>
                                         <span class="mx-2">|</span>
-                                        <span class="text-xs text-gray-500">Horas:</span> <span class="text-sm font-medium text-gray-800">${horasDisplay}</span>
+                                        <span class="text-xs text-gray-500 dark:text-gray-400">Horas:</span> <span class="text-sm font-medium text-gray-800 dark:text-gray-100">${horasDisplay}</span>
                                     </div>
                                     <div class="text-right">
-                                        <label class="text-xs text-gray-500">Valor Total</label>
-                                        <p class="text-lg font-bold text-green-700">${formatCurrency(custoTotal)}</p>
+                                        <label class="text-xs text-gray-500 dark:text-gray-400">Valor Total</label>
+                                        <p class="text-lg font-bold text-green-700 dark:text-green-400">${formatCurrency(custoTotal)}</p>
                                     </div>
                                 </div>
                             </div>
@@ -898,7 +968,7 @@
                     `;
                 }).join('');
 
-                listaAcionamentos.innerHTML = htmlCards || `<div class="col-span-full text-center py-4 text-gray-500">Nenhum acionamento encontrado para este mês.</div>`;
+                listaAcionamentos.innerHTML = htmlCards || `<div class="col-span-full text-center py-4 text-gray-500 dark:text-gray-400">Nenhum acionamento encontrado para este mês.</div>`;
                 listaAcionamentos.classList.remove('hidden');
                 containerTabelaHistorico.classList.add('hidden');
 
@@ -915,54 +985,53 @@
                     const statusColorClass = getStatusColor(status);
                     const isFinalizado = status === STATUSES.ENCERRADO || status === STATUSES.CANCELADO;
 
-                    // Botões de ação (SVGs) - IDÊNTICOS AOS DOS CARTÕES
                     let actionButtons = '';
                     if (isFinalizado) {
-                        actionButtons = `
-                            <button data-id="${acionamento.id}" data-action="viewOS" class="p-1 rounded-full text-blue-600 hover:text-blue-900 hover:bg-blue-50 transition duration-150" title="Ver OS">
+                         actionButtons = `
+                            <button data-id="${acionamento.id}" data-action="viewOS" class="p-1 rounded-full text-blue-600 dark:text-blue-300 hover:text-blue-900 dark:hover:text-blue-100 hover:bg-blue-50 dark:hover:bg-gray-700 transition duration-150" title="Ver OS">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                             </button>
-                            <button data-id="${acionamento.id}" data-action="finalDelete" class="p-1 rounded-full text-red-600 hover:text-red-900 hover:bg-red-50 transition duration-150" title="Excluir Definitivamente (Requer Senha)">
+                            <button data-id="${acionamento.id}" data-action="finalDelete" class="p-1 rounded-full text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-200 hover:bg-red-50 dark:hover:bg-gray-700 transition duration-150" title="Excluir Definitivamente (Requer Senha)">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                             </button>
                         `;
                     } else {
-                        actionButtons = `
-                            <button data-id="${acionamento.id}" data-action="viewOS" class="p-1 rounded-full text-blue-600 hover:text-blue-900 hover:bg-blue-50 transition duration-150" title="Ver OS">
+                         actionButtons = `
+                            <button data-id="${acionamento.id}" data-action="viewOS" class="p-1 rounded-full text-blue-600 dark:text-blue-300 hover:text-blue-900 dark:hover:text-blue-100 hover:bg-blue-50 dark:hover:bg-gray-700 transition duration-150" title="Ver OS">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                             </button>
-                            <button data-id="${acionamento.id}" data-action="edit" class="p-1 rounded-full text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition duration-150" title="Editar Acionamento">
+                            <button data-id="${acionamento.id}" data-action="edit" class="p-1 rounded-full text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700 transition duration-150" title="Editar Acionamento">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                             </button>
-                            <button data-id="${acionamento.id}" data-action="delete" class="p-1 rounded-full text-red-600 hover:text-red-900 hover:bg-red-50 transition duration-150" title="Eliminar (Apenas Status Aberto)">
+                            <button data-id="${acionamento.id}" data-action="delete" class="p-1 rounded-full text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-200 hover:bg-red-50 dark:hover:bg-gray-700 transition duration-150" title="Eliminar (Apenas Status Aberto)">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                             </button>
                         `;
                     }
 
                     return `
-                        <tr class="border-b hover:bg-gray-50">
-                            <td data-label="Data" class="py-2 px-4 whitespace-nowrap">${formatDate(acionamentoDate)}</td>
-                            <td data-label="Solicitante" class="py-2 px-4 whitespace-nowrap">${acionamento.solicitante}</td>
-                            <td data-label="Local" class="py-2 px-4 whitespace-nowrap">${acionamento.local}</td>
-                            <td data-label="Motorista" class="py-2 px-4 whitespace-nowrap">${motoristaDisplay}</td>
-                            <td data-label="Chamado GLPI" class="py-2 px-4 whitespace-nowrap">${acionamento.chamadoGLPI}</td>
-                            <td data-label="OS Locamunck" class="py-2 px-4 whitespace-nowrap">${osLocamunckDisplay}</td>
-                            <td data-label="Km" class="py-2 px-4 whitespace-nowrap">${kmDisplay}</td>
-                            <td data-label="Horas" class="py-2 px-4 whitespace-nowrap">${horasDisplay}</td>
-                            <td data-label="Valor" class="py-2 px-4 whitespace-nowrap font-semibold">${formatCurrency(custoTotal)}</td>
+                        <tr class="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                            <td data-label="Data" class="py-2 px-4 whitespace-nowrap text-gray-800 dark:text-gray-100">${formatDate(acionamentoDate)}</td>
+                            <td data-label="Solicitante" class="py-2 px-4 whitespace-nowrap text-gray-800 dark:text-gray-100">${acionamento.solicitante}</td>
+                            <td data-label="Local" class="py-2 px-4 whitespace-nowrap text-gray-800 dark:text-gray-100">${acionamento.local}</td>
+                            <td data-label="Motorista" class="py-2 px-4 whitespace-nowrap text-gray-800 dark:text-gray-100">${motoristaDisplay}</td>
+                            <td data-label="Chamado GLPI" class="py-2 px-4 whitespace-nowrap text-gray-800 dark:text-gray-100">${acionamento.chamadoGLPI}</td>
+                            <td data-label="OS Locamunck" class="py-2 px-4 whitespace-nowrap text-gray-800 dark:text-gray-100">${osLocamunckDisplay}</td>
+                            <td data-label="Km" class="py-2 px-4 whitespace-nowrap text-gray-800 dark:text-gray-100">${kmDisplay}</td>
+                            <td data-label="Horas" class="py-2 px-4 whitespace-nowrap text-gray-800 dark:text-gray-100">${horasDisplay}</td>
+                            <td data-label="Valor" class="py-2 px-4 whitespace-nowrap font-semibold text-gray-800 dark:text-gray-100">${formatCurrency(custoTotal)}</td>
                             <td data-label="Status" class="py-2 px-4 whitespace-nowrap"><span class="inline-flex items-center px-3 py-0.5 rounded-full text-xs font-medium ${statusColorClass}">${status}</span></td>
                             <td data-label="Ações" class="py-2 px-4 flex space-x-2 justify-center md:justify-start">${actionButtons}</td>
                         </tr>
                     `;
                 }).join('');
 
-                listaAcionamentosTabela.innerHTML = htmlLista || `<tr><td colspan="11" class="text-center py-4 text-gray-500">Nenhum acionamento encontrado para este mês.</td></tr>`;
+                listaAcionamentosTabela.innerHTML = htmlLista || `<tr><td colspan="11" class="text-center py-4 text-gray-500 dark:text-gray-400">Nenhum acionamento encontrado para este mês.</td></tr>`;
                 containerTabelaHistorico.classList.remove('hidden');
                 listaAcionamentos.classList.add('hidden');
             }
 
-            // Atualiza os totais do PERÍODO (Mês selecionado)
+            // Atualiza os totais do PERÍODO
             const totalHorasEl = document.getElementById('totalHoras');
             if (totalHorasEl) {
                 totalHorasEl.textContent = formatCurrency(totalHoras);
@@ -970,30 +1039,27 @@
                 document.getElementById('totalGeral').textContent = formatCurrency(totalGeral);
             }
 
-            // Chama a renderização dos rankings (baseado nos dados filtrados)
+            // Chama a renderização dos rankings
             if (currentView === 'dashboard') {
                 renderDashboard(filteredData);
             }
         }
 
-        // NOVA FUNÇÃO: Renderiza os totais GERAIS (de todos os acionamentos)
+        // Renderiza os totais GERAIS
         function renderTotaisGerais(data) {
             let totalHorasGeral = 0;
             let totalKmGeral = 0;
             let totalGeralGeral = 0;
 
             data.forEach(acionamento => {
-                // MODIFICAÇÃO: Acionamentos cancelados não entram no cálculo de custo
                 if (acionamento.status !== STATUSES.CANCELADO) {
                     const custoTotal = calcularCustoTotal(acionamento.horas || 0, acionamento.km || 0);
-
                     totalHorasGeral += (acionamento.horas || 0) * HOUR_RATE;
                     totalKmGeral += (acionamento.km || 0) * KM_RATE;
                     totalGeralGeral += custoTotal;
                 }
             });
 
-            // Atualiza os elementos do DOM para os totais GERAIS
             const totalHorasGeralEl = document.getElementById('totalHorasGeral');
             if (totalHorasGeralEl) {
                 totalHorasGeralEl.textContent = formatCurrency(totalHorasGeral);
@@ -1002,20 +1068,17 @@
             }
         }
 
-
+        // Renderiza o Dashboard
         function renderDashboard(data) {
             const rankingLocaisEl = document.getElementById('rankingLocais');
             const rankingSolicitantesEl = document.getElementById('rankingSolicitantes');
-
-            if (!rankingLocaisEl || !rankingSolicitantesEl) {
-                return;
-            }
+            if (!rankingLocaisEl || !rankingSolicitantesEl) return;
 
             const dataValida = data.filter(a => a.status !== STATUSES.CANCELADO);
 
             if (dataValida.length === 0) {
-                rankingLocaisEl.innerHTML = '<p class="text-gray-500 text-sm">Nenhum dado para o período.</p>';
-                rankingSolicitantesEl.innerHTML = '<p class="text-gray-500 text-sm">Nenhum dado para o período.</p>';
+                rankingLocaisEl.innerHTML = '<p class="text-gray-500 dark:text-gray-400 text-sm">Nenhum dado para o período.</p>';
+                rankingSolicitantesEl.innerHTML = '<p class="text-gray-500 dark:text-gray-400 text-sm">Nenhum dado para o período.</p>';
                 return;
             }
 
@@ -1024,9 +1087,9 @@
                 return acc;
             }, {});
             rankingLocaisEl.innerHTML = Object.entries(locaisMap).sort(([, a], [, b]) => b - a).map(([local, count]) => `
-                <div class="flex justify-between border-b last:border-b-0 py-1">
-                    <span class="text-sm text-gray-600">${local}</span>
-                    <span class="text-sm font-bold primary-blue">${count} Acionamento(s)</span>
+                <div class="flex justify-between border-b dark:border-gray-700 last:border-b-0 py-1">
+                    <span class="text-sm text-gray-600 dark:text-gray-300">${local}</span>
+                    <span class="text-sm font-bold primary-blue dark:text-blue-300">${count} Acionamento(s)</span>
                 </div>
             `).join('');
 
@@ -1035,47 +1098,38 @@
                 return acc;
             }, {});
             rankingSolicitantesEl.innerHTML = Object.entries(solicitantesMap).sort(([, a], [, b]) => b - a).map(([solicitante, count]) => `
-                <div class="flex justify-between border-b last:border-b-0 py-1">
-                    <span class="text-sm text-gray-600">${solicitante}</span>
-                    <span class="text-sm font-bold primary-blue">${count} Acionamento(s)</span>
+                <div class="flex justify-between border-b dark:border-gray-700 last:border-b-0 py-1">
+                    <span class="text-sm text-gray-600 dark:text-gray-300">${solicitante}</span>
+                    <span class="text-sm font-bold primary-blue dark:text-blue-300">${count} Acionamento(s)</span>
                 </div>
             `).join('');
         }
 
-        // NOVA FUNÇÃO: Renderiza o status do caminhão na view de Registro
+        // Renderiza o status do caminhão
         function renderStatusAtualCaminhao(data) {
             const displayCard = document.getElementById('statusCaminhaoDisplay');
             const titleElement = document.getElementById('statusCaminhaoTitle');
             const containerElement = document.getElementById('containerLocaisAtuais');
-
-            if (!displayCard || !titleElement || !containerElement) {
-                return;
-            }
+            if (!displayCard || !titleElement || !containerElement) return;
 
             const ativacoesEmExecucao = data.filter(a => a.status === STATUSES.EM_EXECUCAO);
 
             if (ativacoesEmExecucao.length > 0) {
-                if (ativacoesEmExecucao.length === 1) {
-                    titleElement.textContent = 'Status Atual do Caminhão:';
-                } else {
-                    titleElement.textContent = `Status Atuais (${ativacoesEmExecucao.length} em execução):`;
-                }
-
+                titleElement.textContent = ativacoesEmExecucao.length === 1 ? 'Status Atual do Caminhão:' : `Status Atuais (${ativacoesEmExecucao.length} em execução):`;
+                
                 const htmlList = ativacoesEmExecucao.map(ativacao => {
                     return `
-                        <div class="bg-white/70 p-3 rounded-lg border border-blue-200 shadow-sm">
-                            <!-- Linha do Local (Principal) -->
+                        <div class="bg-white/70 dark:bg-gray-700/70 p-3 rounded-lg border border-blue-200 dark:border-blue-800 shadow-sm">
                             <div class="flex items-center mb-2">
-                                <svg class="w-5 h-5 text-blue-600 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                                <p class="text-blue-900 font-semibold text-base">${ativacao.local}</p>
+                                <svg class="w-5 h-5 text-blue-600 dark:text-blue-300 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                <p class="text-blue-900 dark:text-blue-200 font-semibold text-base">${ativacao.local}</p>
                             </div>
-                            <!-- Linha de Detalhes -->
-                            <div class="flex items-center text-sm text-gray-700 mb-1">
-                                <svg class="w-4 h-4 text-gray-500 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5h14a2 2 0 012 2v3a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 01-2-2H5a2 2 0 01-2-2V7a2 2 0 012-2z"></path></svg>
+                            <div class="flex items-center text-sm text-gray-700 dark:text-gray-300 mb-1">
+                                <svg class="w-4 h-4 text-gray-500 dark:text-gray-400 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5h14a2 2 0 012 2v3a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 01-2-2H5a2 2 0 01-2-2V7a2 2 0 012-2z"></path></svg>
                                 GLPI: <span class="font-medium ml-1">${ativacao.chamadoGLPI}</span>
                             </div>
-                            <div class="flex items-center text-sm text-gray-700">
-                                <svg class="w-4 h-4 text-gray-500 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                            <div class="flex items-center text-sm text-gray-700 dark:text-gray-300">
+                                <svg class="w-4 h-4 text-gray-500 dark:text-gray-400 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
                                 Solicitante: <span class="font-medium ml-1">${ativacao.solicitante}</span>
                             </div>
                         </div>
@@ -1084,7 +1138,6 @@
 
                 containerElement.innerHTML = htmlList;
                 displayCard.classList.remove('hidden');
-
             } else {
                 containerElement.innerHTML = '';
                 displayCard.classList.add('hidden');
@@ -1092,13 +1145,19 @@
         }
 
         // --------------------------
-        // Lógica de Views e Navegação
+        // Lógica de Views e Navegação (MODIFICADA)
         // --------------------------
 
         function switchView(view) {
             currentView = view;
-            document.querySelectorAll('.card').forEach(v => v.classList.add('hidden'));
-            document.querySelectorAll('nav button').forEach(b => b.classList.remove('border-primary-blue', 'text-gray-700'));
+            // Esconde todas as views (agora dentro do <main>)
+            document.querySelectorAll('main .card[id^="view-"]').forEach(v => v.classList.add('hidden'));
+            
+            // Reseta todos os botões da sidebar
+            document.querySelectorAll('#sidebar nav button').forEach(b => {
+                b.classList.remove('bg-primary-blue', 'text-white', 'dark:bg-blue-700');
+                b.classList.add('text-gray-500', 'dark:text-gray-400', 'hover:bg-gray-100', 'dark:hover:bg-gray-700');
+            });
 
             const viewEl = document.getElementById(`view-${view}`);
             const tabEl = document.getElementById(`tab-${view}`);
@@ -1107,10 +1166,11 @@
                 viewEl.classList.remove('hidden');
             }
             if (tabEl) {
-                tabEl.classList.add('border-primary-blue', 'text-gray-700');
+                // Ativa o botão clicado
+                tabEl.classList.add('bg-primary-blue', 'text-white', 'dark:bg-blue-700');
+                tabEl.classList.remove('text-gray-500', 'dark:text-gray-400', 'hover:bg-gray-100', 'dark:hover:bg-gray-700');
             }
 
-            // Garante que a visualização correta (cartões/lista) é renderizada ao mudar para histórico
             if (view === 'historico' || view === 'dashboard') {
                 renderAcionamentos(acionamentosData);
             } else if (view === 'localizacao') {
@@ -1118,30 +1178,28 @@
             }
         }
 
-        // NOVA FUNÇÃO: Controla o toggle de visualização (Cartões/Lista)
+        // Controla o toggle de visualização (Cartões/Lista)
         window.toggleHistoricoView = (mode) => {
-            if (mode === historicoViewMode) return; // Não faz nada se já estiver no modo
+            if (mode === historicoViewMode) return;
             historicoViewMode = mode;
 
             const btnCards = document.getElementById('btn-view-cards');
             const btnLista = document.getElementById('btn-view-lista');
             
-            // Atualiza a aparência dos botões
             if (mode === 'cards') {
                 btnCards.classList.add('bg-primary-blue', 'text-white');
-                btnCards.classList.remove('bg-white', 'text-gray-600', 'hover:bg-gray-50');
+                btnCards.classList.remove('bg-white', 'dark:bg-gray-700', 'text-gray-600', 'dark:text-gray-300', 'hover:bg-gray-50', 'dark:hover:bg-gray-600');
                 
-                btnLista.classList.add('bg-white', 'text-gray-600', 'hover:bg-gray-50');
+                btnLista.classList.add('bg-white', 'dark:bg-gray-700', 'text-gray-600', 'dark:text-gray-300', 'hover:bg-gray-50', 'dark:hover:bg-gray-600');
                 btnLista.classList.remove('bg-primary-blue', 'text-white');
             } else {
                 btnLista.classList.add('bg-primary-blue', 'text-white');
-                btnLista.classList.remove('bg-white', 'text-gray-600', 'hover:bg-gray-50');
+                btnLista.classList.remove('bg-white', 'dark:bg-gray-700', 'text-gray-600', 'dark:text-gray-300', 'hover:bg-gray-50', 'dark:hover:bg-gray-600');
 
-                btnCards.classList.add('bg-white', 'text-gray-600', 'hover:bg-gray-50');
+                btnCards.classList.add('bg-white', 'dark:bg-gray-700', 'text-gray-600', 'dark:text-gray-300', 'hover:bg-gray-50', 'dark:hover:bg-gray-600');
                 btnCards.classList.remove('bg-primary-blue', 'text-white');
             }
 
-            // Re-renderiza o conteúdo do histórico com o novo modo
             renderAcionamentos(acionamentosData);
         }
 
@@ -1155,7 +1213,6 @@
             if (event && event.target !== targetModal) return;
             targetModal.classList.add('hidden');
             targetModal.classList.remove('flex');
-
             if (modalId === 'passwordModal') {
                  document.getElementById('passwordInput').value = '';
                  document.getElementById('passwordError').style.display = 'none';
@@ -1176,10 +1233,8 @@
             const confirmModal = document.getElementById('confirmationModal');
             document.getElementById('confirmationModalTitle').textContent = title;
             document.getElementById('confirmationModalMessage').innerHTML = message;
-
             const iconContainer = document.getElementById('confirmationModalIcon');
             const footer = document.getElementById('confirmationModalFooter');
-
             let iconHtml = '';
             let confirmButtonClass = '';
             let confirmButtonText = 'Confirmar';
@@ -1195,83 +1250,71 @@
             } else if (type === 'error') {
                  iconHtml = `<svg class="w-12 h-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
             }
-
             iconContainer.innerHTML = iconHtml;
 
+            const cancelButton = `<button onclick="closeModal(null, 'confirmationModal')" class="px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-800 dark:text-gray-100 rounded-md hover:bg-gray-400 dark:hover:bg-gray-500 transition duration-150">Cancelar</button>`;
+            
             if (type === 'error') {
-                 footer.innerHTML = `<button onclick="closeModal(null, 'confirmationModal')" class="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 transition duration-150">OK</button>`;
+                 footer.innerHTML = `<button onclick="closeModal(null, 'confirmationModal')" class="px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-800 dark:text-gray-100 rounded-md hover:bg-gray-400 dark:hover:bg-gray-500 transition duration-150">OK</button>`;
             } else {
                 if (type === 'closure') {
-                    if (title.includes('Cancelar')) {
-                        confirmButtonText = 'Sim, Cancelar';
-                    } else if (title.includes('Encerrar')) {
-                        confirmButtonText = 'Sim, Encerrar';
-                    }
+                    if (title.includes('Cancelar')) confirmButtonText = 'Sim, Cancelar';
+                    else if (title.includes('Encerrar')) confirmButtonText = 'Sim, Encerrar';
                 }
-
-                footer.innerHTML = `
-                    <button id="confirmActionBtn" class="px-4 py-2 text-white rounded-md transition duration-150 font-semibold ${confirmButtonClass}">${confirmButtonText}</button>
-                    <button onclick="closeModal(null, 'confirmationModal')" class="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 transition duration-150">Cancelar</button>
-                `;
-                 document.getElementById('confirmActionBtn').addEventListener('click', () => {
+                footer.innerHTML = `<button id="confirmActionBtn" class="px-4 py-2 text-white rounded-md transition duration-150 font-semibold ${confirmButtonClass}">${confirmButtonText}</button>${cancelButton}`;
+                document.getElementById('confirmActionBtn').addEventListener('click', () => {
                     closeModal(null, 'confirmationModal');
                     if (onConfirm) onConfirm();
                 });
             }
-
             confirmModal.classList.remove('hidden');
             confirmModal.classList.add('flex');
         }
 
-        // MODIFICAÇÃO: Função de conversão de DMS para Decimal
+        // Conversão de DMS para Decimal
         function dmsToDecimal(dmsString) {
             const cleanedString = dmsString.trim().toUpperCase();
             const parts = cleanedString.split(/[^\d\.]+/).filter(Boolean);
-
             if(parts.length < 3) {
                 console.warn(`Formato DMS inválido: ${dmsString}`);
                 return 0;
             }
-
             const [degrees, minutes, seconds] = parts.map(parseFloat);
             let decimal = degrees + (minutes / 60) + (seconds / 3600);
-
             if (cleanedString.includes('S') || cleanedString.includes('W')) {
                 decimal = -decimal;
             }
             return decimal;
         }
 
+        // Renderiza a View de Localização
         function renderLocalizacaoView() {
             const contentEl = document.getElementById('localizacaoContent');
             if (!contentEl) return;
-
             const pps = LOCAIS_GEOLOCALIZACAO.filter(l => l.nome.startsWith('PP'));
             const saus = LOCAIS_GEOLOCALIZACAO.filter(l => l.nome.startsWith('SAU'));
-
             const createUnitList = (title, units) => {
-                let html = `<h3 class="text-xl font-semibold text-gray-800 border-b pb-2 mb-4">${title}</h3>`;
+                let html = `<h3 class="text-xl font-semibold text-gray-800 dark:text-gray-100 border-b dark:border-gray-700 pb-2 mb-4">${title}</h3>`;
                 html += `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">`;
                 units.forEach(unit => {
                     const lat = dmsToDecimal(unit.latDMS);
                     const lon = dmsToDecimal(unit.lonDMS);
                     const mapLink = `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`;
-
                     html += `
-                        <div class="bg-gray-50 p-4 rounded-lg border">
-                            <p class="font-bold text-lg primary-blue">${unit.nome} - ${unit.cidade}</p>
-                            <p class="text-sm text-gray-600">Referência: ${unit.km}</p>
-                            <p class="text-xs font-mono text-gray-500 mt-2">${unit.latDMS} / ${unit.lonDMS}</p>
+                        <div class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg border dark:border-gray-700">
+                            <p class="font-bold text-lg primary-blue dark:text-blue-300">${unit.nome} - ${unit.cidade}</p>
+                            <p class="text-sm text-gray-600 dark:text-gray-300">Referência: ${unit.km}</p>
+                            <p class="text-xs font-mono text-gray-500 dark:text-gray-400 mt-2">${unit.latDMS} / ${unit.lonDMS}</p>
                             <a href="${mapLink}" target="_blank" rel="noopener noreferrer" class="inline-block mt-3 w-full text-center bg-green-600 text-white py-1 px-3 rounded-md hover:bg-green-700 text-sm font-semibold transition duration-150">Abrir no Mapa</a>
                         </div>`;
                 });
                 html += `</div>`;
                 return html;
             };
-
             contentEl.innerHTML = createUnitList('Praças de Pedágio (PP)', pps) + createUnitList('Serviços de Atendimento ao Utilizador (SAU)', saus);
         }
 
+        // Gera o conteúdo da OS (para modal)
         function generateOSContent(acionamento) {
             const dataAcionamento = acionamento.data.toDate ? acionamento.data.toDate() : new Date(acionamento.data);
             const horas = acionamento.horas || 0;
@@ -1288,16 +1331,13 @@
 ------------------------------------------------------
 ID do Registo: ${acionamento.id}
 Status Atual: ${status.toUpperCase()}
-
 Data: ${formatDate(dataAcionamento)}
 Solicitante: ${acionamento.solicitante}
 Local: ${acionamento.local}
 Chamado GLPI: ${acionamento.chamadoGLPI}
 OS Locamunck: ${osLocamunck}
-
 MOTIVO DO CANCELAMENTO:
 ${observacao}
-
 ------------------------------------------------------
 [FIM DA OS]`;
             }
@@ -1306,7 +1346,6 @@ ${observacao}
 ------------------------------------------------------
 ID do Registo: ${acionamento.id}
 Status Atual: ${status.toUpperCase()}
-
 1. INFORMAÇÕES BÁSICAS:
    Data do Acionamento: ${formatDate(dataAcionamento)}
    Solicitante: ${acionamento.solicitante}
@@ -1314,27 +1353,23 @@ Status Atual: ${status.toUpperCase()}
    Local: ${acionamento.local}
    Chamado GLPI: ${acionamento.chamadoGLPI}
    OS Locamunck: ${osLocamunck}
-
 2. DADOS DE CUSTO:
    Tempo de Serviço: ${(horas).toFixed(2)} Horas
    Km Deslocamento: ${(km).toFixed(1)} Km
-
 3. CÁLCULO FINANCEIRO:
    Custo Horas (${formatCurrency(HOUR_RATE)}/h): ${formatCurrency(custoHoras)}
    Custo Km (${formatCurrency(KM_RATE)}/km): ${formatCurrency(custoKm)}
    --------------------------------------------------
    CUSTO TOTAL: ${formatCurrency(custoTotal)}
-
 4. OBSERVAÇÕES:
    ${observacao}
-
 5. INFORMAÇÕES DE CONTACTO:
    E-mail para Notificação: ${NOTIFICATION_EMAIL}
-
 ------------------------------------------------------
 [FIM DA OS]`;
         }
 
+        // Ação de Ver OS
         function handleViewOSClick(event) {
             const button = event.target.closest('[data-action="viewOS"]');
             if (!button) return;
@@ -1343,8 +1378,8 @@ Status Atual: ${status.toUpperCase()}
             if (!acionamento) return;
 
             modalTitle.textContent = `Ordem de Serviço (OS) - ${id.substring(0, 8)}...`;
-            modalBody.innerHTML = `<div class="bg-gray-100 p-4 rounded-md overflow-x-auto"><pre id="osContentText" class="text-sm font-mono whitespace-pre-wrap">${generateOSContent(acionamento)}</pre></div>`;
-            modalFooter.innerHTML = `<button id="copyOsBtn" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-150">Copiar Texto</button><button onclick="closeModal(null, 'modal')" class="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 transition duration-150">Fechar</button>`;
+            modalBody.innerHTML = `<div class="bg-gray-100 dark:bg-gray-900 p-4 rounded-md overflow-x-auto"><pre id="osContentText" class="text-sm font-mono whitespace-pre-wrap text-gray-800 dark:text-gray-100">${generateOSContent(acionamento)}</pre></div>`;
+            modalFooter.innerHTML = `<button id="copyOsBtn" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-150">Copiar Texto</button><button onclick="closeModal(null, 'modal')" class="px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-800 dark:text-gray-100 rounded-md hover:bg-gray-400 dark:hover:bg-gray-500 transition duration-150">Fechar</button>`;
 
             document.getElementById('copyOsBtn').addEventListener('click', () => {
                 const text = document.getElementById('osContentText').textContent;
@@ -1363,6 +1398,7 @@ Status Atual: ${status.toUpperCase()}
             modal.classList.add('flex');
         }
 
+        // Ação de Editar
         function handleEditAcionamento(event) {
             const button = event.target.closest('[data-action="edit"]');
             if (!button) return;
@@ -1379,31 +1415,34 @@ Status Atual: ${status.toUpperCase()}
             const solicitanteOptions = SOLICITANTES.map(s => `<option value="${s}" ${s === acionamento.solicitante ? 'selected' : ''}>${s}</option>`).join('');
             const localOptions = LOCAIS.map(l => `<option value="${l.nome} - ${l.cidade}" ${`${l.nome} - ${l.cidade}` === acionamento.local ? 'selected' : ''}>${l.nome} - ${l.cidade}</option>`).join('');
             const statusOptions = Object.values(STATUSES).map(s => `<option value="${s}" ${s === originalStatus ? 'selected' : ''}>${s}</option>`).join('');
+            
+            const inputStyle = "mt-1 block w-full rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 p-2 shadow-sm focus:border-primary-blue focus:ring-primary-blue";
+            const labelStyle = "block text-sm font-medium text-gray-700 dark:text-gray-300";
 
             modalTitle.textContent = `Editar Acionamento - OS ${acionamento.chamadoGLPI}`;
              modalBody.innerHTML = `
                 <form id="formEditAcionamento">
                     <input type="hidden" id="editId" value="${id}">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div><label for="editData" class="block text-sm font-medium text-gray-700">Data</label><input type="date" id="editData" value="${dateValue}" required class="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-primary-blue focus:ring-primary-blue"></div>
-                        <div><label for="editStatus" class="block text-sm font-medium text-gray-700">Status</label><select id="editStatus" required class="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-primary-blue focus:ring-primary-blue">${statusOptions}</select></div>
-                        <div><label for="editSolicitante" class="block text-sm font-medium text-gray-700">Solicitante</label><select id="editSolicitante" required class="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-primary-blue focus:ring-primary-blue">${solicitanteOptions}</select></div>
-                        <div><label for="editLocal" class="block text-sm font-medium text-gray-700">Local</label><select id="editLocal" required class="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-primary-blue focus:ring-primary-blue">${localOptions}</select></div>
+                        <div><label for="editData" class="${labelStyle}">Data</label><input type="date" id="editData" value="${dateValue}" required class="${inputStyle}"></div>
+                        <div><label for="editStatus" class="${labelStyle}">Status</label><select id="editStatus" required class="${inputStyle}">${statusOptions}</select></div>
+                        <div><label for="editSolicitante" class="${labelStyle}">Solicitante</label><select id="editSolicitante" required class="${inputStyle}">${solicitanteOptions}</select></div>
+                        <div><label for="editLocal" class="${labelStyle}">Local</label><select id="editLocal" required class="${inputStyle}">${localOptions}</select></div>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-                        <div><label for="editMotorista" class="block text-sm font-medium text-gray-700">Motorista</label><input type="text" id="editMotorista" value="${acionamento.motorista || ''}" required class="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-primary-blue focus:ring-primary-blue"></div>
-                        <div><label for="editHoras" class="block text-sm font-medium text-gray-700">Horas</label><input type="number" step="0.01" min="0" id="editHoras" value="${acionamento.horas !== null ? acionamento.horas.toFixed(2) : ''}" class="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-primary-blue focus:ring-primary-blue"></div>
-                        <div><label for="editKm" class="block text-sm font-medium text-gray-700">Km</label><input type="number" step="0.1" min="0" id="editKm" value="${acionamento.km !== null ? acionamento.km.toFixed(1) : ''}" class="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-primary-blue focus:ring-primary-blue"></div>
+                        <div><label for="editMotorista" class="${labelStyle}">Motorista</label><input type="text" id="editMotorista" value="${acionamento.motorista || ''}" required class="${inputStyle}"></div>
+                        <div><label for="editHoras" class="${labelStyle}">Horas</label><input type="number" step="0.01" min="0" id="editHoras" value="${acionamento.horas !== null ? acionamento.horas.toFixed(2) : ''}" class="${inputStyle}"></div>
+                        <div><label for="editKm" class="${labelStyle}">Km</label><input type="number" step="0.1" min="0" id="editKm" value="${acionamento.km !== null ? acionamento.km.toFixed(1) : ''}" class="${inputStyle}"></div>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                        <div><label for="editChamadoGLPI" class="block text-sm font-medium text-gray-700">Chamado GLPI</label><input type="text" id="editChamadoGLPI" value="${acionamento.chamadoGLPI}" required class="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-primary-blue focus:ring-primary-blue"></div>
-                        <div><label for="editOsLocamunck" class="block text-sm font-medium text-gray-700">OS Locamunck</label><input type="text" id="editOsLocamunck" value="${acionamento.osLocamunck || ''}" class="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-primary-blue focus:ring-primary-blue"></div>
+                        <div><label for="editChamadoGLPI" class="${labelStyle}">Chamado GLPI</label><input type="text" id="editChamadoGLPI" value="${acionamento.chamadoGLPI}" required class="${inputStyle}"></div>
+                        <div><label for="editOsLocamunck" class="${labelStyle}">OS Locamunck</label><input type="text" id="editOsLocamunck" value="${acionamento.osLocamunck || ''}" class="${inputStyle}"></div>
                     </div>
-                    <div class="mt-4"><label for="editObservacao" class="block text-sm font-medium text-gray-700">Observação</label><textarea id="editObservacao" rows="3" class="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-primary-blue focus:ring-primary-blue" placeholder="Descreva a atividade ou qualquer nota relevante...">${acionamento.observacao || ''}</textarea></div>
+                    <div class="mt-4"><label for="editObservacao" class="${labelStyle}">Observação</label><textarea id="editObservacao" rows="3" class="${inputStyle}" placeholder="Descreva a atividade ou qualquer nota relevante...">${acionamento.observacao || ''}</textarea></div>
                 </form>
             `;
 
-            modalFooter.innerHTML = `<button id="saveEditBtn" class="px-4 py-2 bg-primary-blue text-white rounded-md">Guardar Alterações</button><button onclick="closeModal(null, 'modal')" class="px-4 py-2 bg-gray-300 rounded-md">Cancelar</button>`;
+            modalFooter.innerHTML = `<button id="saveEditBtn" class="px-4 py-2 bg-primary-blue text-white rounded-md">Guardar Alterações</button><button onclick="closeModal(null, 'modal')" class="px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-800 dark:text-gray-100 rounded-md">Cancelar</button>`;
 
             const editStatusSelect = document.getElementById('editStatus');
             const editMotoristaInput = document.getElementById('editMotorista');
@@ -1462,7 +1501,6 @@ Status Atual: ${status.toUpperCase()}
                 const utcDate = new Date(editDate.getUTCFullYear(), editDate.getUTCMonth(), editDate.getUTCDate());
 
                 let horasValue, kmValue, custoTotalValue, motoristaValue;
-
                 if (editStatus === STATUSES.CANCELADO) {
                     motoristaValue = null;
                     horasValue = null;
@@ -1490,10 +1528,8 @@ Status Atual: ${status.toUpperCase()}
                 };
 
                 closeModal();
-
                 const isFinalizing = editStatus === STATUSES.ENCERRADO || editStatus === STATUSES.CANCELADO;
                 const wasFinalized = originalStatus === STATUSES.ENCERRADO || originalStatus === STATUSES.CANCELADO;
-
                 if (isFinalizing && !wasFinalized) {
                     const actionText = editStatus === STATUSES.ENCERRADO ? 'Encerrar' : 'Cancelar';
                     showConfirmationModal(
@@ -1511,13 +1547,12 @@ Status Atual: ${status.toUpperCase()}
             modal.classList.add('flex');
         }
 
-
+        // Ação de Eliminar (Status Aberto)
         function handleDeleteClick(event) {
             const button = event.target.closest('[data-action="delete"]');
             if (!button) return;
             const id = button.dataset.id;
             const acionamento = acionamentosData.find(a => a.id === id);
-
             if (acionamento && acionamento.status !== STATUSES.ABERTO) {
                  showConfirmationModal('Ação Bloqueada', 'Só é possível eliminar acionamentos com o status "Aberto". Acionamentos em execução, encerrados ou cancelados não podem ser eliminados.', 'error');
                  return;
@@ -1525,11 +1560,11 @@ Status Atual: ${status.toUpperCase()}
             showConfirmationModal('Confirmar Eliminação?', `Tem a certeza que deseja eliminar o acionamento para o chamado ${acionamento.chamadoGLPI}?`, 'delete', () => deleteAcionamento(id));
         }
 
+        // Ação de Eliminar Final (com Senha)
         function handleFinalDeleteClick(event) {
             const button = event.target.closest('[data-action="finalDelete"]');
             if (!button) return;
             const id = button.dataset.id;
-
             document.getElementById('deleteIdStorage').value = id;
             document.getElementById('passwordInput').value = '';
             document.getElementById('passwordError').style.display = 'none';
@@ -1542,7 +1577,6 @@ Status Atual: ${status.toUpperCase()}
             const passwordInput = document.getElementById('passwordInput');
             const passwordError = document.getElementById('passwordError');
             const deleteId = document.getElementById('deleteIdStorage').value;
-
             if (passwordInput.value === DELETE_PASSWORD) {
                 closeModal(null, 'passwordModal');
                 deleteAcionamento(deleteId);
@@ -1554,7 +1588,7 @@ Status Atual: ${status.toUpperCase()}
         }
 
         // --------------------------
-        // Funções de Exportação
+        // Funções de Exportação (Modificada)
         // --------------------------
 
         function exportToCSV() {
@@ -1565,31 +1599,26 @@ Status Atual: ${status.toUpperCase()}
                 const acionamentoMonth = dateInUTC.toISOString().substring(0, 7);
                 return acionamentoMonth === currentMonthFilter;
             });
-
             if (filteredData.length === 0) return;
 
-            const header = ["ID", "Data", "Solicitante", "Motorista", "Local", "Chamado GLPI", "OS Locamunck", "Km", "Horas", "Custo Total (R$)", "Status", "Observação", "UserId"];
+            const header = ["DATA", "LOCAL", "CHAMADO", "VALOR DAS HORAS", "VALOR DO KM", "TOTAL"];
             const csvRows = filteredData.map(a => {
                 const acionamentoDate = a.data.toDate ? a.data.toDate() : new Date(a.data);
-                const custoTotal = calcularCustoTotal(a.horas, a.km);
-                const kmValue = a.km !== null ? (a.km).toFixed(1).replace('.', ',') : '0,0';
-                const horasValue = a.horas !== null ? (a.horas).toFixed(2).replace('.', ',') : '0,00';
+                const horas = a.horas || 0;
+                const km = a.km || 0;
+                const custoHoras = horas * HOUR_RATE;
+                const custoKm = km * KM_RATE;
+                const custoTotal = custoHoras + custoKm;
+                const custoHorasValue = custoHoras.toFixed(2).replace('.', ',');
+                const custoKmValue = custoKm.toFixed(2).replace('.', ',');
                 const custoTotalValue = custoTotal.toFixed(2).replace('.', ',');
-
                 return [
-                    `"${a.id}"`,
                     `"${formatDate(acionamentoDate)}"`,
-                    `"${a.solicitante}"`,
-                    `"${a.motorista || ''}"`,
                     `"${a.local}"`,
                     `"${a.chamadoGLPI}"`,
-                    `"${a.osLocamunck || ''}"`,
-                    `"${kmValue}"`,
-                    `"${horasValue}"`,
-                    `"${custoTotalValue}"`,
-                    `"${a.status}"`,
-                    `"${a.observacao || ''}"`,
-                    `"${userId}"`
+                    `"${custoHorasValue}"`,
+                    `"${custoKmValue}"`,
+                    `"${custoTotalValue}"`
                 ].join(';');
             });
             const csvContent = ["\uFEFF", header.join(';'), ...csvRows].join('\n');
@@ -1608,14 +1637,10 @@ Status Atual: ${status.toUpperCase()}
         // --------------------------
 
         async function initializeAppLogic() {
-            if (typeof setLogLevel === 'function') {
-                setLogLevel('Debug');
-            }
-
+            if (typeof setLogLevel === 'function') setLogLevel('Debug');
             const appId = typeof __app_id !== 'undefined' ? __app_id : null;
             let firebaseConfig = null;
             const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-
             try {
                 if (typeof __firebase_config !== 'undefined' && __firebase_config && __firebase_config !== "{}") {
                     firebaseConfig = JSON.parse(__firebase_config);
@@ -1629,11 +1654,7 @@ Status Atual: ${status.toUpperCase()}
                 userId = 'local-user-test-id-' + (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 9));
                 userIdDisplay.textContent = userId.substring(0, 10) + '... (SIMULAÇÃO)';
                 isAuthReady = false; 
-
-                if (submitButton) {
-                    submitButton.textContent = 'Erro de Configuração';
-                }
-
+                if (submitButton) submitButton.textContent = 'Erro de Configuração';
                 finalizeUI();
                 showConfirmationModal('Modo de Simulação', 'Nenhum dado será guardado. A aplicação está à espera da Configuração do Firebase para começar a funcionar.', 'error');
                 return;
@@ -1650,12 +1671,10 @@ Status Atual: ${status.toUpperCase()}
                         isAuthReady = true;
                         userIdDisplay.textContent = userId;
                         console.log(`SUCESSO AUTH: Utilizador autenticado: ${userId}`);
-
                         if (submitButton) {
                             submitButton.disabled = false;
                             submitButton.textContent = 'Guardar Acionamento';
                         }
-
                         if (!window.firestoreListenersAttached) {
                             setupFirestoreListeners(appId);
                             finalizeUI();
@@ -1685,17 +1704,13 @@ Status Atual: ${status.toUpperCase()}
                         console.error("Código do Erro:", authError.code);
                         showConfirmationModal('Erro de Autenticação', `Não foi possível autenticar anonimamente. Verifique os Domínios Autorizados no seu Console Firebase. <br><br>Erro: ${authError.message}`, 'error');
                         loadingOverlay.innerHTML = `<div class="p-4 text-center"><p class="text-red-600 font-semibold">Falha na Autenticação Anónima:</p><p class="text-sm text-gray-700 mt-2">${authError.message}</p></div>`;
-                        if (submitButton) {
-                            submitButton.textContent = 'Falha no Auth';
-                        }
+                        if (submitButton) submitButton.textContent = 'Falha no Auth';
                     }
                 }
             } catch (error) {
                 console.error("Erro CRÍTICO na inicialização do Firebase:", error);
                 loadingOverlay.innerHTML = `<div class="p-4 text-center"><p class="text-red-600 font-semibold">Falha ao iniciar a aplicação:</p><p class="text-sm text-gray-700 mt-2">Verifique a API Key. Mensagem: ${error.message}</p></div>`;
-                if (submitButton) {
-                    submitButton.textContent = 'Falha no Firebase';
-                }
+                if (submitButton) submitButton.textContent = 'Falha no Firebase';
             }
         }
 
@@ -1704,29 +1719,23 @@ Status Atual: ${status.toUpperCase()}
                 console.error("setupFirestoreListeners chamado sem db!");
                 return;
             }
-
             const acionamentosRef = getCollectionRef();
             if (!acionamentosRef) {
                     console.error("Falha ao obter referência da coleção em setupFirestoreListeners");
                     return;
             }
-
             const q = query(acionamentosRef);
 
             onSnapshot(q, (snapshot) => {
                 acionamentosData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
                 acionamentosData.sort((a, b) => {
                     const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : (a.data?.toDate ? a.data.toDate() : new Date(0));
                     const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : (b.data?.toDate ? b.data.toDate() : new Date(0));
-                    return dateB - dateA; // Ordenação descendente (mais recente primeiro)
+                    return dateB - dateA;
                 });
-
                 console.log(`Dados atualizados: ${acionamentosData.length} acionamentos carregados.`);
-
                 renderTotaisGerais(acionamentosData);
                 renderStatusAtualCaminhao(acionamentosData);
-
                 if (currentView === 'historico' || currentView === 'dashboard') {
                     renderAcionamentos(acionamentosData);
                 }
@@ -1760,7 +1769,7 @@ Status Atual: ${status.toUpperCase()}
             handleFinalDeleteClick(event);
         });
 
-        // NOVO: Listener para o CORPO DA TABELA
+        // Listener para o CORPO DA TABELA
         if (listaAcionamentosTabela) {
             listaAcionamentosTabela.addEventListener('click', (event) => {
                 handleDeleteClick(event);
