@@ -30,10 +30,12 @@
 
         /* Classes para responsividade da Tabela */
         @media (max-width: 768px) {
-            .table-responsive thead {
+            /* Esconde o cabeçalho da tabela em telemóveis */
+            #container-tabela-historico .table-responsive thead {
                 display: none;
             }
-            .table-responsive tr {
+            /* Transforma linhas em blocos */
+            #container-tabela-historico .table-responsive tr {
                 display: block;
                 margin-bottom: 0.5rem;
                 border: 1px solid #e5e7eb;
@@ -41,14 +43,16 @@
                 padding: 0.5rem;
                 background-color: white;
             }
-            .table-responsive td {
+            /* Transforma células em blocos e alinha à direita */
+            #container-tabela-historico .table-responsive td {
                 display: block;
                 text-align: right !important;
                 padding: 0.25rem 0.5rem;
                 position: relative;
                 font-size: 0.875rem;
             }
-            .table-responsive td::before {
+            /* Adiciona o "data-label" (cabeçalho) antes do dado */
+            #container-tabela-historico .table-responsive td::before {
                 content: attr(data-label);
                 position: absolute;
                 left: 0.5rem;
@@ -58,7 +62,7 @@
                 text-align: left;
                 font-weight: 600;
             }
-            .table-responsive td:last-child {
+            #container-tabela-historico .table-responsive td:last-child {
                 border-bottom: none;
             }
         }
@@ -77,6 +81,11 @@
         /* Estilo para a mensagem de erro no modal de senha */
         #passwordError {
             display: none; /* Escondido por padrão */
+        }
+
+        /* Estilos para o botão de toggle ativo/inativo */
+        .toggle-btn {
+            transition: background-color 0.2s ease, color 0.2s ease;
         }
     </style>
 </head>
@@ -201,23 +210,47 @@
             </form>
         </div>
 
-        <!-- View de Histórico -->
+        <!-- View de Histórico (MODIFICADA) -->
         <div id="view-historico" class="card bg-white p-6 rounded-lg shadow-lg hidden">
-            <div class="flex flex-col md:flex-row justify-between items-center mb-6">
-                <h2 class="text-2xl font-semibold primary-blue mb-3 md:mb-0">Histórico de Acionamentos</h2>
-                <div class="flex space-x-4 items-center">
-                    <label for="selectMonthFilter" class="text-sm font-medium text-gray-700">Mês de Medição:</label>
-                    <select id="selectMonthFilter" class="rounded-md border-gray-300 shadow-sm focus:border-primary-blue focus:ring-primary-blue p-2 text-sm">
-                        <!-- Opções de meses serão preenchidas via JS -->
-                    </select>
-                    <button onclick="exportToCSV()" class="bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition duration-150 ease-in-out font-semibold text-sm shadow-md flex items-center">
+            <!-- CABEÇALHO DA VIEW HISTÓRICO -->
+            <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+                <h2 class="text-2xl font-semibold primary-blue">Histórico de Acionamentos</h2>
+                
+                <div class="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4 items-center w-full md:w-auto">
+                    <!-- Filtro de Mês -->
+                    <div class="flex items-center w-full md:w-auto">
+                        <label for="selectMonthFilter" class="text-sm font-medium text-gray-700 mr-2">Mês:</label>
+                        <select id="selectMonthFilter" class="rounded-md border-gray-300 shadow-sm focus:border-primary-blue focus:ring-primary-blue p-2 text-sm w-full md:w-auto">
+                            <!-- Opções de meses serão preenchidas via JS -->
+                        </select>
+                    </div>
+
+                    <!-- NOVO: Toggle de Visualização (Cartões/Lista) -->
+                    <div class="flex rounded-md shadow-sm">
+                        <button id="btn-view-cards" onclick="toggleHistoricoView('cards')" class="toggle-btn relative inline-flex items-center px-3 py-2 rounded-l-md border border-gray-300 text-sm font-medium bg-primary-blue text-white">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                        </button>
+                        <button id="btn-view-lista" onclick="toggleHistoricoView('lista')" class="toggle-btn -ml-px relative inline-flex items-center px-3 py-2 rounded-r-md border border-gray-300 text-sm font-medium bg-white text-gray-600 hover:bg-gray-50">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg>
+                        </button>
+                    </div>
+                    
+                    <!-- Botão de Exportar -->
+                    <button onclick="exportToCSV()" class="bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition duration-150 ease-in-out font-semibold text-sm shadow-md flex items-center w-full md:w-auto justify-center">
                         <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                         Exportar CSV
                     </button>
                 </div>
             </div>
 
-            <div class="overflow-x-auto">
+            <!-- Container para Visualização em CARTÕES -->
+            <!-- O ID 'listaAcionamentos' (com o listener) está neste div -->
+            <div id="listaAcionamentos" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Cartões serão inseridos aqui via JS -->
+            </div>
+
+            <!-- Container para Visualização em LISTA (Tabela) -->
+            <div id="container-tabela-historico" class="overflow-x-auto hidden">
                 <table class="min-w-full divide-y divide-gray-200 table-responsive">
                     <thead class="bg-gray-50">
                         <tr>
@@ -226,7 +259,7 @@
                             <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Local</th>
                             <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Motorista</th>
                             <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Chamado GLPI</th>
-                            <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">OS Locamunck</th> <!-- NOVA COLUNA -->
+                            <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">OS Locamunck</th>
                             <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Km</th>
                             <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Horas</th>
                             <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Valor (R$)</th>
@@ -234,11 +267,13 @@
                             <th class="py-3 px-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
                         </tr>
                     </thead>
-                    <tbody id="listaAcionamentos" class="bg-white divide-y divide-gray-200">
-                        <!-- Linhas serão inseridas aqui via JS -->
+                    <!-- O listener de clique será adicionado a este TBody -->
+                    <tbody id="listaAcionamentosTabela" class="bg-white divide-y divide-gray-200">
+                        <!-- Linhas (TRs) serão inseridas aqui via JS -->
                     </tbody>
                 </table>
             </div>
+            
         </div>
 
         <!-- View de Dashboard -->
@@ -430,6 +465,7 @@
         let currentView = 'registro';
         let currentMonthFilter = new Date().toISOString().substring(0, 7); // yyyy-mm
         let isAuthReady = false;
+        let historicoViewMode = 'cards'; // NOVO: 'cards' ou 'lista'
 
         // --------------------------
         // Constantes e Regras de Negócio
@@ -511,16 +547,18 @@
         const appContainer = document.getElementById('appContainer');
         const userIdDisplay = document.getElementById('userIdDisplay');
         const formAcionamento = document.getElementById('formAcionamento');
-        const listaAcionamentos = document.getElementById('listaAcionamentos');
+        const listaAcionamentos = document.getElementById('listaAcionamentos'); // Refere-se à GRELHA de Cartões
+        const containerTabelaHistorico = document.getElementById('container-tabela-historico'); // Refere-se ao container da Tabela
+        const listaAcionamentosTabela = document.getElementById('listaAcionamentosTabela'); // Refere-se ao TBODY da Tabela
         const selectMonthFilter = document.getElementById('selectMonthFilter');
         const modal = document.getElementById('modal');
         const notificationModal = document.getElementById('notificationModal');
         const confirmationModal = document.getElementById('confirmationModal');
-        const passwordModal = document.getElementById('passwordModal'); // NOVO: Referência ao modal de senha
+        const passwordModal = document.getElementById('passwordModal');
         const modalTitle = document.getElementById('modalTitle');
         const modalBody = document.getElementById('modalBody');
         const modalFooter = document.getElementById('modalFooter');
-        const submitButton = document.getElementById('submitButton'); // Referência para o botão de submit
+        const submitButton = document.getElementById('submitButton');
 
         // --------------------------
         // Funções Utilitárias
@@ -545,17 +583,11 @@
         }
 
         function getCollectionRef() {
-            // Se 'db' não estiver definido (modo simulação), retorna null para impedir operações
-            // O userId não é mais necessário para o caminho da coleção, mas ainda é verificado em 'adicionarAcionamento' para garantir a autenticação.
             if (!db) {
                 console.warn("getCollectionRef foi chamada mas db está em falta.");
                 return null;
             }
-            // Usa __app_id se estiver disponível, senão usa um fallback seguro
             const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-
-            // MUDANÇA: Apontando para a coleção PÚBLICA (Colaborativa)
-            // Todos os usuários (logados anonimamente) lerão e escreverão neste mesmo local.
             return collection(db, 'artifacts', appId, 'public', 'data', 'acionamentos');
         }
 
@@ -627,7 +659,6 @@
         async function adicionarAcionamento(event) {
             event.preventDefault();
 
-            // A autenticação (isAuthReady) ainda é necessária para cumprir as regras de segurança (request.auth != null)
             if (!isAuthReady || !userId) {
                 console.error("Tentativa de adicionar acionamento sem autenticação pronta.");
                 showConfirmationModal('Erro de Autenticação', 'Sistema não autenticado. Recarregue a página e verifique a configuração do Firebase.', 'error');
@@ -638,21 +669,19 @@
             const solicitante = document.getElementById('solicitante').value;
             const local = document.getElementById('local').value;
             const chamadoGLPI = document.getElementById('chamadoGLPI').value;
-            const osLocamunck = document.getElementById('osLocamunck').value.trim() || null; // NOVO: Leitura do campo
+            const osLocamunck = document.getElementById('osLocamunck').value.trim() || null;
             const observacao = document.getElementById('observacao').value.trim() || null;
 
-            // Adiciona validação de data para garantir que não é uma data futura ou inválida
             const inputDate = new Date(data);
             if (isNaN(inputDate.getTime())) {
                  showConfirmationModal('Data Inválida', 'Por favor, insira uma data de acionamento válida.', 'error');
                  return;
             }
 
-            // Ajusta a data para UTC para evitar problemas de fuso horário ao salvar no Firebase
             const utcDate = new Date(inputDate.getUTCFullYear(), inputDate.getUTCMonth(), inputDate.getUTCDate());
 
             const newAcionamento = {
-                data: utcDate, // Armazena como objeto Date do Firebase (timestamp)
+                data: utcDate,
                 solicitante,
                 local,
                 motorista: null,
@@ -660,21 +689,19 @@
                 km: null,
                 custoTotal: 0,
                 chamadoGLPI,
-                osLocamunck, // NOVO: Campo adicionado ao objeto a ser salvo
+                osLocamunck,
                 observacao,
                 status: STATUSES.ABERTO,
-                createdAt: serverTimestamp() // Essencial para a ordenação
+                createdAt: serverTimestamp()
             };
 
-            const acionamentosRef = getCollectionRef(); // Agora aponta para a coleção pública
-            // Se getCollectionRef retornar null, é porque o Firebase não está configurado.
+            const acionamentosRef = getCollectionRef();
             if (!acionamentosRef) {
                 console.error("Falha ao obter referência da coleção. DB está nulo.");
                 showConfirmationModal('Modo de Simulação Ativo', 'A configuração do Firebase não foi encontrada. O acionamento NÃO foi guardado.', 'error');
                 return;
             };
 
-            // Desativa o botão para prevenir cliques duplos
             submitButton.disabled = true;
             submitButton.textContent = 'Guardando...';
 
@@ -687,14 +714,13 @@
                 console.error("Erro ao adicionar acionamento:", error);
                 showConfirmationModal('Erro ao Guardar', `Não foi possível guardar o acionamento: ${error.message}. Verifique as regras de segurança do Firestore.`, 'error');
             } finally {
-                // Reativa o botão
                 submitButton.disabled = false;
                 submitButton.textContent = 'Guardar Acionamento';
             }
         }
 
         async function deleteAcionamento(id) {
-            const acionamentosRef = getCollectionRef(); // Aponta para a coleção pública
+            const acionamentosRef = getCollectionRef();
             if (!acionamentosRef) return;
             try {
                 await deleteDoc(doc(acionamentosRef, id));
@@ -707,14 +733,13 @@
 
         async function executeAcionamentoUpdate(id, updatedData) {
             const originalAcionamento = acionamentosData.find(a => a.id === id);
-            // MODIFICAÇÃO: Não permite editar se estiver Encerrado OU Cancelado
             if (originalAcionamento && (originalAcionamento.status === STATUSES.ENCERRADO || originalAcionamento.status === STATUSES.CANCELADO)) {
                 console.error("Tentativa de atualização bloqueada: OS já está finalizada (Encerrada ou Cancelada).");
                 return;
             }
 
             try {
-                const acionamentosRef = getCollectionRef(); // Aponta para a coleção pública
+                const acionamentosRef = getCollectionRef();
                 if (!acionamentosRef) throw new Error("Referência da coleção não encontrada.");
 
                 await updateDoc(doc(acionamentosRef, id), updatedData);
@@ -741,91 +766,203 @@
                     return 'bg-blue-100 text-blue-800 border border-blue-300';
                 case STATUSES.ENCERRADO:
                     return 'bg-green-100 text-green-800 border border-green-300';
-                case STATUSES.CANCELADO: // NOVA COR
+                case STATUSES.CANCELADO:
                     return 'bg-red-100 text-red-800 border border-red-300';
                 default:
                     return 'bg-gray-100 text-gray-800 border border-gray-300';
             }
         }
 
+        function getStatusCardBorder(status) {
+            switch (status) {
+                case STATUSES.ABERTO:
+                    return 'border-t-4 border-amber-400';
+                case STATUSES.EM_EXECUCAO:
+                    return 'border-t-4 border-blue-400';
+                case STATUSES.ENCERRADO:
+                    return 'border-t-4 border-green-400';
+                case STATUSES.CANCELADO:
+                    return 'border-t-4 border-red-400';
+                default:
+                    return 'border-t-4 border-gray-400';
+            }
+        }
+
+        // MODIFICAÇÃO: Função agora renderiza Cartões OU Lista
         function renderAcionamentos(data) {
             let totalHoras = 0;
             let totalKm = 0;
             let totalGeral = 0;
 
             const filteredData = data.filter(a => {
-                // Converte timestamp do Firestore para Date
                 const acionamentoDate = a.data?.toDate ? a.data.toDate() : (a.data ? new Date(a.data) : null);
                 if (!acionamentoDate) return false;
-
-                // Converte a data do acionamento para YYYY-MM no fuso horário local (ou UTC se preferir)
-                // Vamos usar UTC para consistência com o filtro
                 const dateInUTC = new Date(acionamentoDate.getUTCFullYear(), acionamentoDate.getUTCMonth(), acionamentoDate.getUTCDate());
                 const acionamentoMonth = dateInUTC.toISOString().substring(0, 7);
-
-                // Filtra pelo mês/ano atual do filtro
                 return acionamentoMonth === currentMonthFilter;
             });
 
-            let html = filteredData.map(acionamento => {
-                const acionamentoDate = acionamento.data.toDate ? acionamento.data.toDate() : new Date(acionamento.data);
-                const horasDisplay = acionamento.horas !== null ? (acionamento.horas).toFixed(2) : 'N/A';
-                const kmDisplay = acionamento.km !== null ? (acionamento.km).toFixed(1) : 'N/A';
-                const motoristaDisplay = acionamento.motorista || 'N/A';
-                const osLocamunckDisplay = acionamento.osLocamunck || 'N/A'; // NOVO: Display para o campo
-
+            // Lógica de cálculo (comum a ambas as visualizações)
+            filteredData.forEach(acionamento => {
                 const custoTotal = calcularCustoTotal(acionamento.horas || 0, acionamento.km || 0);
-
-                // Acumula os totais apenas dos itens filtrados
                 totalHoras += (acionamento.horas || 0) * HOUR_RATE;
                 totalKm += (acionamento.km || 0) * KM_RATE;
                 totalGeral += custoTotal;
+            });
 
-                const status = acionamento.status || STATUSES.ABERTO;
-                const statusColor = getStatusColor(status);
+            // Lógica de Renderização Condicional
+            if (historicoViewMode === 'cards') {
+                const htmlCards = filteredData.map(acionamento => {
+                    const acionamentoDate = acionamento.data.toDate ? acionamento.data.toDate() : new Date(acionamento.data);
+                    const horasDisplay = acionamento.horas !== null ? (acionamento.horas).toFixed(2) : 'N/A';
+                    const kmDisplay = acionamento.km !== null ? (acionamento.km).toFixed(1) : 'N/A';
+                    const motoristaDisplay = acionamento.motorista || 'N/A';
+                    const osLocamunckDisplay = acionamento.osLocamunck || 'N/A';
+                    const custoTotal = calcularCustoTotal(acionamento.horas || 0, acionamento.km || 0);
+                    const status = acionamento.status || STATUSES.ABERTO;
+                    const statusColorClass = getStatusColor(status);
+                    const cardBorderClass = getStatusCardBorder(status);
+                    const isFinalizado = status === STATUSES.ENCERRADO || status === STATUSES.CANCELADO;
 
-                // MODIFICAÇÃO: Verifica se o status é final (Encerrado OU Cancelado)
-                const isFinalizado = status === STATUSES.ENCERRADO || status === STATUSES.CANCELADO;
+                    // Botões de ação (SVGs)
+                    let actionButtons = '';
+                    if (isFinalizado) {
+                        actionButtons = `
+                            <button data-id="${acionamento.id}" data-action="viewOS" class="p-1 rounded-full text-blue-600 hover:text-blue-900 hover:bg-blue-50 transition duration-150" title="Ver OS">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            </button>
+                            <button data-id="${acionamento.id}" data-action="finalDelete" class="p-1 rounded-full text-red-600 hover:text-red-900 hover:bg-red-50 transition duration-150" title="Excluir Definitivamente (Requer Senha)">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </button>
+                        `;
+                    } else {
+                        actionButtons = `
+                            <button data-id="${acionamento.id}" data-action="viewOS" class="p-1 rounded-full text-blue-600 hover:text-blue-900 hover:bg-blue-50 transition duration-150" title="Ver OS">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            </button>
+                            <button data-id="${acionamento.id}" data-action="edit" class="p-1 rounded-full text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition duration-150" title="Editar Acionamento">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                            </button>
+                            <button data-id="${acionamento.id}" data-action="delete" class="p-1 rounded-full text-red-600 hover:text-red-900 hover:bg-red-50 transition duration-150" title="Eliminar (Apenas Status Aberto)">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </button>
+                        `;
+                    }
 
-                // MODIFICAÇÃO: Lógica dos botões de ação
-                let actionButtons = '';
-                if (isFinalizado) {
-                    // Se Finalizado (Encerrado ou Cancelado), mostra Ver OS e Exclusão Final (com senha)
-                    actionButtons = `
-                        <button data-id="${acionamento.id}" data-action="viewOS" class="text-blue-600 hover:text-blue-900 transition duration-150" title="Ver OS">📄</button>
-                        <button data-id="${acionamento.id}" data-action="finalDelete" class="text-red-700 hover:text-red-900 transition duration-150" title="Excluir Definitivamente (Requer Senha)">❌</button>
+                    return `
+                        <div class="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col ${cardBorderClass}">
+                            <!-- Card Header -->
+                            <div class="p-4">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <span class="inline-flex items-center px-3 py-0.5 rounded-full text-xs font-medium ${statusColorClass}">${status}</span>
+                                        <p class="text-lg font-bold primary-blue mt-2">${acionamento.local}</p>
+                                    </div>
+                                    <div class="flex space-x-1 flex-shrink-0 ml-2">${actionButtons}</div>
+                                </div>
+                                <p class="text-sm text-gray-600 mt-1">GLPI: <span class="font-medium text-gray-800">${acionamento.chamadoGLPI}</span></p>
+                                <p class="text-sm text-gray-600">OS Locamunck: <span class="font-medium text-gray-800">${osLocamunckDisplay}</span></p>
+                            </div>
+                            <!-- Card Body (Info) -->
+                            <div class="px-4 pb-4 border-t border-gray-100">
+                                <div class="grid grid-cols-2 gap-x-4 gap-y-2 mt-3">
+                                    <div>
+                                        <label class="text-xs text-gray-500">Solicitante</label>
+                                        <p class="text-sm font-medium text-gray-800">${acionamento.solicitante}</p>
+                                    </div>
+                                    <div>
+                                        <label class="text-xs text-gray-500">Motorista</label>
+                                        <p class="text-sm font-medium text-gray-800">${motoristaDisplay}</p>
+                                    </div>
+                                    <div>
+                                        <label class="text-xs text-gray-500">Data</label>
+                                        <p class="text-sm font-medium text-gray-800">${formatDate(acionamentoDate)}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Card Footer (Costs) -->
+                            <div class="bg-gray-50 px-4 py-3 mt-auto border-t">
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <span class="text-xs text-gray-500">Km:</span> <span class="text-sm font-medium text-gray-800">${kmDisplay}</span>
+                                        <span class="mx-2">|</span>
+                                        <span class="text-xs text-gray-500">Horas:</span> <span class="text-sm font-medium text-gray-800">${horasDisplay}</span>
+                                    </div>
+                                    <div class="text-right">
+                                        <label class="text-xs text-gray-500">Valor Total</label>
+                                        <p class="text-lg font-bold text-green-700">${formatCurrency(custoTotal)}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     `;
-                } else {
-                    // Se Não Finalizado (Aberto ou Em Execução), mostra as opções normais
-                    actionButtons = `
-                        <button data-id="${acionamento.id}" data-action="viewOS" class="text-blue-600 hover:text-blue-900 transition duration-150" title="Ver OS">📄</button>
-                        <button data-id="${acionamento.id}" data-action="edit" class="text-gray-600 hover:text-gray-900 transition duration-150" title="Editar Acionamento">✏️</button>
-                        <button data-id="${acionamento.id}" data-action="delete" class="text-red-600 hover:text-red-900 transition duration-150" title="Eliminar (Apenas Status Aberto)">🗑️</button>
+                }).join('');
+
+                listaAcionamentos.innerHTML = htmlCards || `<div class="col-span-full text-center py-4 text-gray-500">Nenhum acionamento encontrado para este mês.</div>`;
+                listaAcionamentos.classList.remove('hidden');
+                containerTabelaHistorico.classList.add('hidden');
+
+            } else {
+                // MODO LISTA (TABELA)
+                const htmlLista = filteredData.map(acionamento => {
+                    const acionamentoDate = acionamento.data.toDate ? acionamento.data.toDate() : new Date(acionamento.data);
+                    const horasDisplay = acionamento.horas !== null ? (acionamento.horas).toFixed(2) : 'N/A';
+                    const kmDisplay = acionamento.km !== null ? (acionamento.km).toFixed(1) : 'N/A';
+                    const motoristaDisplay = acionamento.motorista || 'N/A';
+                    const osLocamunckDisplay = acionamento.osLocamunck || 'N/A';
+                    const custoTotal = calcularCustoTotal(acionamento.horas || 0, acionamento.km || 0);
+                    const status = acionamento.status || STATUSES.ABERTO;
+                    const statusColorClass = getStatusColor(status);
+                    const isFinalizado = status === STATUSES.ENCERRADO || status === STATUSES.CANCELADO;
+
+                    // Botões de ação (SVGs) - IDÊNTICOS AOS DOS CARTÕES
+                    let actionButtons = '';
+                    if (isFinalizado) {
+                        actionButtons = `
+                            <button data-id="${acionamento.id}" data-action="viewOS" class="p-1 rounded-full text-blue-600 hover:text-blue-900 hover:bg-blue-50 transition duration-150" title="Ver OS">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            </button>
+                            <button data-id="${acionamento.id}" data-action="finalDelete" class="p-1 rounded-full text-red-600 hover:text-red-900 hover:bg-red-50 transition duration-150" title="Excluir Definitivamente (Requer Senha)">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </button>
+                        `;
+                    } else {
+                        actionButtons = `
+                            <button data-id="${acionamento.id}" data-action="viewOS" class="p-1 rounded-full text-blue-600 hover:text-blue-900 hover:bg-blue-50 transition duration-150" title="Ver OS">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            </button>
+                            <button data-id="${acionamento.id}" data-action="edit" class="p-1 rounded-full text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition duration-150" title="Editar Acionamento">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                            </button>
+                            <button data-id="${acionamento.id}" data-action="delete" class="p-1 rounded-full text-red-600 hover:text-red-900 hover:bg-red-50 transition duration-150" title="Eliminar (Apenas Status Aberto)">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </button>
+                        `;
+                    }
+
+                    return `
+                        <tr class="border-b hover:bg-gray-50">
+                            <td data-label="Data" class="py-2 px-4 whitespace-nowrap">${formatDate(acionamentoDate)}</td>
+                            <td data-label="Solicitante" class="py-2 px-4 whitespace-nowrap">${acionamento.solicitante}</td>
+                            <td data-label="Local" class="py-2 px-4 whitespace-nowrap">${acionamento.local}</td>
+                            <td data-label="Motorista" class="py-2 px-4 whitespace-nowrap">${motoristaDisplay}</td>
+                            <td data-label="Chamado GLPI" class="py-2 px-4 whitespace-nowrap">${acionamento.chamadoGLPI}</td>
+                            <td data-label="OS Locamunck" class="py-2 px-4 whitespace-nowrap">${osLocamunckDisplay}</td>
+                            <td data-label="Km" class="py-2 px-4 whitespace-nowrap">${kmDisplay}</td>
+                            <td data-label="Horas" class="py-2 px-4 whitespace-nowrap">${horasDisplay}</td>
+                            <td data-label="Valor" class="py-2 px-4 whitespace-nowrap font-semibold">${formatCurrency(custoTotal)}</td>
+                            <td data-label="Status" class="py-2 px-4 whitespace-nowrap"><span class="inline-flex items-center px-3 py-0.5 rounded-full text-xs font-medium ${statusColorClass}">${status}</span></td>
+                            <td data-label="Ações" class="py-2 px-4 flex space-x-2 justify-center md:justify-start">${actionButtons}</td>
+                        </tr>
                     `;
-                }
+                }).join('');
 
-
-                return `
-                    <tr class="border-b hover:bg-gray-50">
-                        <td data-label="Data" class="py-2 px-4 whitespace-nowrap">${formatDate(acionamentoDate)}</td>
-                        <td data-label="Solicitante" class="py-2 px-4 whitespace-nowrap">${acionamento.solicitante}</td>
-                        <td data-label="Local" class="py-2 px-4 whitespace-nowrap">${acionamento.local}</td>
-                        <td data-label="Motorista" class="py-2 px-4 whitespace-nowrap">${motoristaDisplay}</td>
-                        <td data-label="Chamado GLPI" class="py-2 px-4 whitespace-nowrap">${acionamento.chamadoGLPI}</td>
-                        <td data-label="OS Locamunck" class="py-2 px-4 whitespace-nowrap">${osLocamunckDisplay}</td> <!-- NOVO TD -->
-                        <td data-label="Km" class="py-2 px-4 whitespace-nowrap">${kmDisplay}</td>
-                        <td data-label="Horas" class="py-2 px-4 whitespace-nowrap">${horasDisplay}</td>
-                        <td data-label="Valor" class="py-2 px-4 whitespace-nowrap font-semibold">${formatCurrency(custoTotal)}</td>
-                        <td data-label="Status" class="py-2 px-4 whitespace-nowrap"><span class="inline-flex items-center px-3 py-0.5 rounded-full text-xs font-medium ${statusColor}">${status}</span></td>
-                        <td data-label="Ações" class="py-2 px-4 flex space-x-2 justify-center md:justify-start">${actionButtons}</td>
-                    </tr>
-                `;
-            }).join('');
-
-            listaAcionamentos.innerHTML = html || `<tr><td colspan="11" class="text-center py-4 text-gray-500">Nenhum acionamento encontrado para este mês.</td></tr>`; // Ajustado colspan para 11
+                listaAcionamentosTabela.innerHTML = htmlLista || `<tr><td colspan="11" class="text-center py-4 text-gray-500">Nenhum acionamento encontrado para este mês.</td></tr>`;
+                containerTabelaHistorico.classList.remove('hidden');
+                listaAcionamentos.classList.add('hidden');
+            }
 
             // Atualiza os totais do PERÍODO (Mês selecionado)
-            // Verificação de segurança para garantir que os elementos existem (só atualiza se estiver no dashboard)
             const totalHorasEl = document.getElementById('totalHoras');
             if (totalHorasEl) {
                 totalHorasEl.textContent = formatCurrency(totalHoras);
@@ -857,7 +994,6 @@
             });
 
             // Atualiza os elementos do DOM para os totais GERAIS
-            // Verificação de segurança para garantir que os elementos existem
             const totalHorasGeralEl = document.getElementById('totalHorasGeral');
             if (totalHorasGeralEl) {
                 totalHorasGeralEl.textContent = formatCurrency(totalHorasGeral);
@@ -871,13 +1007,10 @@
             const rankingLocaisEl = document.getElementById('rankingLocais');
             const rankingSolicitantesEl = document.getElementById('rankingSolicitantes');
 
-            // CORREÇÃO: Adicionada guarda de segurança
-            // Se os elementos não existirem (ex: view errada), não faz nada.
             if (!rankingLocaisEl || !rankingSolicitantesEl) {
                 return;
             }
 
-            // MODIFICAÇÃO: Filtra dados cancelados ANTES de calcular os rankings
             const dataValida = data.filter(a => a.status !== STATUSES.CANCELADO);
 
             if (dataValida.length === 0) {
@@ -910,33 +1043,25 @@
         }
 
         // NOVA FUNÇÃO: Renderiza o status do caminhão na view de Registro
-        // MODIFICADA PARA MOSTRAR MÚLTIPLOS ACIONAMENTOS E MAIS DETALHES + ÍCONES
         function renderStatusAtualCaminhao(data) {
             const displayCard = document.getElementById('statusCaminhaoDisplay');
-            const titleElement = document.getElementById('statusCaminhaoTitle'); // O <p> tag
-            const containerElement = document.getElementById('containerLocaisAtuais'); // O <div> tag
+            const titleElement = document.getElementById('statusCaminhaoTitle');
+            const containerElement = document.getElementById('containerLocaisAtuais');
 
-            // Se os elementos não existirem (ex: view errada), não faz nada.
             if (!displayCard || !titleElement || !containerElement) {
                 return;
             }
 
-            // 1. Usa FILTER para encontrar TODOS os acionamentos em execução
             const ativacoesEmExecucao = data.filter(a => a.status === STATUSES.EM_EXECUCAO);
 
-            // 2. Verifica se a lista tem itens
             if (ativacoesEmExecucao.length > 0) {
-
-                // 3. Define o Título (Singular ou Plural)
                 if (ativacoesEmExecucao.length === 1) {
                     titleElement.textContent = 'Status Atual do Caminhão:';
                 } else {
                     titleElement.textContent = `Status Atuais (${ativacoesEmExecucao.length} em execução):`;
                 }
 
-                // 4. Gera a lista HTML de locais, GLPI e Solicitante com ÍCONES
                 const htmlList = ativacoesEmExecucao.map(ativacao => {
-                    // Estrutura de "mini-cartão" mais intuitiva
                     return `
                         <div class="bg-white/70 p-3 rounded-lg border border-blue-200 shadow-sm">
                             <!-- Linha do Local (Principal) -->
@@ -961,8 +1086,7 @@
                 displayCard.classList.remove('hidden');
 
             } else {
-                // 5. Esconde o cartão se não houver nenhum em execução
-                containerElement.innerHTML = ''; // Limpa a lista
+                containerElement.innerHTML = '';
                 displayCard.classList.add('hidden');
             }
         }
@@ -986,11 +1110,39 @@
                 tabEl.classList.add('border-primary-blue', 'text-gray-700');
             }
 
+            // Garante que a visualização correta (cartões/lista) é renderizada ao mudar para histórico
             if (view === 'historico' || view === 'dashboard') {
                 renderAcionamentos(acionamentosData);
             } else if (view === 'localizacao') {
                 renderLocalizacaoView();
             }
+        }
+
+        // NOVA FUNÇÃO: Controla o toggle de visualização (Cartões/Lista)
+        window.toggleHistoricoView = (mode) => {
+            if (mode === historicoViewMode) return; // Não faz nada se já estiver no modo
+            historicoViewMode = mode;
+
+            const btnCards = document.getElementById('btn-view-cards');
+            const btnLista = document.getElementById('btn-view-lista');
+            
+            // Atualiza a aparência dos botões
+            if (mode === 'cards') {
+                btnCards.classList.add('bg-primary-blue', 'text-white');
+                btnCards.classList.remove('bg-white', 'text-gray-600', 'hover:bg-gray-50');
+                
+                btnLista.classList.add('bg-white', 'text-gray-600', 'hover:bg-gray-50');
+                btnLista.classList.remove('bg-primary-blue', 'text-white');
+            } else {
+                btnLista.classList.add('bg-primary-blue', 'text-white');
+                btnLista.classList.remove('bg-white', 'text-gray-600', 'hover:bg-gray-50');
+
+                btnCards.classList.add('bg-white', 'text-gray-600', 'hover:bg-gray-50');
+                btnCards.classList.remove('bg-primary-blue', 'text-white');
+            }
+
+            // Re-renderiza o conteúdo do histórico com o novo modo
+            renderAcionamentos(acionamentosData);
         }
 
         // --------------------------
@@ -1000,12 +1152,10 @@
         function closeModal(event, modalId = 'modal') {
             const targetModal = document.getElementById(modalId);
             if (!targetModal) return;
-            // Fecha apenas se o clique for no overlay, não no conteúdo
             if (event && event.target !== targetModal) return;
             targetModal.classList.add('hidden');
             targetModal.classList.remove('flex');
 
-            // Limpa campos específicos se for o modal de senha
             if (modalId === 'passwordModal') {
                  document.getElementById('passwordInput').value = '';
                  document.getElementById('passwordError').style.display = 'none';
@@ -1019,7 +1169,6 @@
         function showNotificationModal() {
             notificationModal.classList.remove('hidden');
             notificationModal.classList.add('flex');
-            // Força um "reflow" para garantir que o navegador renderize a mudança
             void notificationModal.offsetHeight;
         }
 
@@ -1039,11 +1188,10 @@
                 iconHtml = `<svg class="w-12 h-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>`;
                 confirmButtonClass = 'bg-red-600 hover:bg-red-700';
                 confirmButtonText = 'Sim, Eliminar';
-            } else if (type === 'closure') { // Usado para Encerrar E Cancelar
+            } else if (type === 'closure') {
                 iconHtml = `<svg class="w-12 h-12 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>`;
-                // O texto do botão será definido dinamicamente
                 confirmButtonClass = 'bg-red-600 hover:bg-red-700';
-                confirmButtonText = 'Sim, Confirmar'; // Texto genérico, será sobreposto
+                confirmButtonText = 'Sim, Confirmar';
             } else if (type === 'error') {
                  iconHtml = `<svg class="w-12 h-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
             }
@@ -1053,9 +1201,7 @@
             if (type === 'error') {
                  footer.innerHTML = `<button onclick="closeModal(null, 'confirmationModal')" class="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 transition duration-150">OK</button>`;
             } else {
-                // Lógica para definir o texto do botão de confirmação (Encerrar vs Cancelar)
                 if (type === 'closure') {
-                     // Hacky: Lemos o título do modal para decidir o texto
                     if (title.includes('Cancelar')) {
                         confirmButtonText = 'Sim, Cancelar';
                     } else if (title.includes('Encerrar')) {
@@ -1077,16 +1223,9 @@
             confirmModal.classList.add('flex');
         }
 
-        // --- INÍCIO DA SEÇÃO CORRIGIDA ---
-
         // MODIFICAÇÃO: Função de conversão de DMS para Decimal
-        // Agora extrai a direção (S/W) da própria string.
         function dmsToDecimal(dmsString) {
-            // Remove quaisquer caracteres não-numéricos/não-ponto do início/fim,
-            // exceto as letras de direção (N, S, E, W)
             const cleanedString = dmsString.trim().toUpperCase();
-            // Divide a string por qualquer coisa que NÃO seja um dígito ou um ponto.
-            // O .filter(Boolean) remove strings vazias que podem surgir (ex: "S" no final)
             const parts = cleanedString.split(/[^\d\.]+/).filter(Boolean);
 
             if(parts.length < 3) {
@@ -1097,7 +1236,6 @@
             const [degrees, minutes, seconds] = parts.map(parseFloat);
             let decimal = degrees + (minutes / 60) + (seconds / 3600);
 
-            // Verifica se a string original continha S (Sul) ou W (Oeste)
             if (cleanedString.includes('S') || cleanedString.includes('W')) {
                 decimal = -decimal;
             }
@@ -1106,7 +1244,7 @@
 
         function renderLocalizacaoView() {
             const contentEl = document.getElementById('localizacaoContent');
-            if (!contentEl) return; // Guarda de segurança
+            if (!contentEl) return;
 
             const pps = LOCAIS_GEOLOCALIZACAO.filter(l => l.nome.startsWith('PP'));
             const saus = LOCAIS_GEOLOCALIZACAO.filter(l => l.nome.startsWith('SAU'));
@@ -1115,12 +1253,8 @@
                 let html = `<h3 class="text-xl font-semibold text-gray-800 border-b pb-2 mb-4">${title}</h3>`;
                 html += `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">`;
                 units.forEach(unit => {
-                    // MODIFICAÇÃO: Converte DMS para Decimal usando a função corrigida
                     const lat = dmsToDecimal(unit.latDMS);
                     const lon = dmsToDecimal(unit.lonDMS);
-
-                    // MODIFICAÇÃO: Cria o link do Google Maps com as coordenadas (query=lat,lon)
-                    // Este é o formato que abre o pino exato no mapa.
                     const mapLink = `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`;
 
                     html += `
@@ -1138,8 +1272,6 @@
             contentEl.innerHTML = createUnitList('Praças de Pedágio (PP)', pps) + createUnitList('Serviços de Atendimento ao Utilizador (SAU)', saus);
         }
 
-        // --- FUNÇÕES RESTAURADAS ---
-
         function generateOSContent(acionamento) {
             const dataAcionamento = acionamento.data.toDate ? acionamento.data.toDate() : new Date(acionamento.data);
             const horas = acionamento.horas || 0;
@@ -1149,9 +1281,8 @@
             const custoTotal = calcularCustoTotal(horas, km);
             const status = acionamento.status || STATUSES.ABERTO;
             const observacao = acionamento.observacao || 'N/A';
-            const osLocamunck = acionamento.osLocamunck || 'N/A'; // NOVO: Campo OS Locamunck
+            const osLocamunck = acionamento.osLocamunck || 'N/A';
 
-            // MODIFICAÇÃO: Se estiver cancelado, mostra a observação de forma mais proeminente e zera custos
             if (status === STATUSES.CANCELADO) {
                 return `[ACIONAMENTO CANCELADO]
 ------------------------------------------------------
@@ -1171,7 +1302,6 @@ ${observacao}
 [FIM DA OS]`;
             }
 
-            // OS Padrão
             return `[ORDEM DE SERVIÇO - ACIONAMENTO MUNCK]
 ------------------------------------------------------
 ID do Registo: ${acionamento.id}
@@ -1222,7 +1352,6 @@ Status Atual: ${status.toUpperCase()}
                 el.value = text;
                 document.body.appendChild(el);
                 el.select();
-                // Usando execCommand para garantir compatibilidade em iframes
                 document.execCommand('copy');
                 document.body.removeChild(el);
                 const copyBtn = document.getElementById('copyOsBtn');
@@ -1242,18 +1371,13 @@ Status Atual: ${status.toUpperCase()}
             if (!acionamento) return;
 
             const originalStatus = acionamento.status || STATUSES.ABERTO;
-            // MODIFICAÇÃO: Bloqueia se estiver Encerrado OU Cancelado
             if (originalStatus === STATUSES.ENCERRADO || originalStatus === STATUSES.CANCELADO) return;
 
             const dataAcionamento = acionamento.data.toDate ? acionamento.data.toDate() : new Date(acionamento.data);
-
-            // Converte a data do timestamp (que é UTC) para o formato YYYY-MM-DD local
             const dateValue = new Date(dataAcionamento.getTime() + dataAcionamento.getTimezoneOffset() * 60000).toISOString().substring(0, 10);
 
             const solicitanteOptions = SOLICITANTES.map(s => `<option value="${s}" ${s === acionamento.solicitante ? 'selected' : ''}>${s}</option>`).join('');
             const localOptions = LOCAIS.map(l => `<option value="${l.nome} - ${l.cidade}" ${`${l.nome} - ${l.cidade}` === acionamento.local ? 'selected' : ''}>${l.nome} - ${l.cidade}</option>`).join('');
-
-            // MODIFICAÇÃO: O dropdown de status agora inclui "Cancelado" automaticamente
             const statusOptions = Object.values(STATUSES).map(s => `<option value="${s}" ${s === originalStatus ? 'selected' : ''}>${s}</option>`).join('');
 
             modalTitle.textContent = `Editar Acionamento - OS ${acionamento.chamadoGLPI}`;
@@ -1261,89 +1385,69 @@ Status Atual: ${status.toUpperCase()}
                 <form id="formEditAcionamento">
                     <input type="hidden" id="editId" value="${id}">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div><label for="editData">Data</label><input type="date" id="editData" value="${dateValue}" required class="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-primary-blue focus:ring-primary-blue"></div>
-                        <div><label for="editStatus">Status</label><select id="editStatus" required class="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-primary-blue focus:ring-primary-blue">${statusOptions}</select></div>
-                        <div><label for="editSolicitante">Solicitante</label><select id="editSolicitante" required class="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-primary-blue focus:ring-primary-blue">${solicitanteOptions}</select></div>
-                        <div><label for="editLocal">Local</label><select id="editLocal" required class="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-primary-blue focus:ring-primary-blue">${localOptions}</select></div>
+                        <div><label for="editData" class="block text-sm font-medium text-gray-700">Data</label><input type="date" id="editData" value="${dateValue}" required class="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-primary-blue focus:ring-primary-blue"></div>
+                        <div><label for="editStatus" class="block text-sm font-medium text-gray-700">Status</label><select id="editStatus" required class="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-primary-blue focus:ring-primary-blue">${statusOptions}</select></div>
+                        <div><label for="editSolicitante" class="block text-sm font-medium text-gray-700">Solicitante</label><select id="editSolicitante" required class="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-primary-blue focus:ring-primary-blue">${solicitanteOptions}</select></div>
+                        <div><label for="editLocal" class="block text-sm font-medium text-gray-700">Local</label><select id="editLocal" required class="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-primary-blue focus:ring-primary-blue">${localOptions}</select></div>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-                        <div><label for="editMotorista">Motorista</label><input type="text" id="editMotorista" value="${acionamento.motorista || ''}" required class="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-primary-blue focus:ring-primary-blue"></div>
-                        <div><label for="editHoras">Horas</label><input type="number" step="0.01" min="0" id="editHoras" value="${acionamento.horas !== null ? acionamento.horas.toFixed(2) : ''}" class="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-primary-blue focus:ring-primary-blue"></div>
-                        <div><label for="editKm">Km</label><input type="number" step="0.1" min="0" id="editKm" value="${acionamento.km !== null ? acionamento.km.toFixed(1) : ''}" class="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-primary-blue focus:ring-primary-blue"></div>
+                        <div><label for="editMotorista" class="block text-sm font-medium text-gray-700">Motorista</label><input type="text" id="editMotorista" value="${acionamento.motorista || ''}" required class="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-primary-blue focus:ring-primary-blue"></div>
+                        <div><label for="editHoras" class="block text-sm font-medium text-gray-700">Horas</label><input type="number" step="0.01" min="0" id="editHoras" value="${acionamento.horas !== null ? acionamento.horas.toFixed(2) : ''}" class="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-primary-blue focus:ring-primary-blue"></div>
+                        <div><label for="editKm" class="block text-sm font-medium text-gray-700">Km</label><input type="number" step="0.1" min="0" id="editKm" value="${acionamento.km !== null ? acionamento.km.toFixed(1) : ''}" class="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-primary-blue focus:ring-primary-blue"></div>
                     </div>
-                    <!-- MODIFICAÇÃO: Adicionado campo OS Locamunck ao modal -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                        <div><label for="editChamadoGLPI">Chamado GLPI</label><input type="text" id="editChamadoGLPI" value="${acionamento.chamadoGLPI}" required class="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-primary-blue focus:ring-primary-blue"></div>
-                        <div><label for="editOsLocamunck">OS Locamunck</label><input type="text" id="editOsLocamunck" value="${acionamento.osLocamunck || ''}" class="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-primary-blue focus:ring-primary-blue"></div>
+                        <div><label for="editChamadoGLPI" class="block text-sm font-medium text-gray-700">Chamado GLPI</label><input type="text" id="editChamadoGLPI" value="${acionamento.chamadoGLPI}" required class="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-primary-blue focus:ring-primary-blue"></div>
+                        <div><label for="editOsLocamunck" class="block text-sm font-medium text-gray-700">OS Locamunck</label><input type="text" id="editOsLocamunck" value="${acionamento.osLocamunck || ''}" class="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-primary-blue focus:ring-primary-blue"></div>
                     </div>
-                    <div class="mt-4"><label for="editObservacao">Observação</label><textarea id="editObservacao" rows="3" class="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-primary-blue focus:ring-primary-blue" placeholder="Descreva a atividade ou qualquer nota relevante...">${acionamento.observacao || ''}</textarea></div>
+                    <div class="mt-4"><label for="editObservacao" class="block text-sm font-medium text-gray-700">Observação</label><textarea id="editObservacao" rows="3" class="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-primary-blue focus:ring-primary-blue" placeholder="Descreva a atividade ou qualquer nota relevante...">${acionamento.observacao || ''}</textarea></div>
                 </form>
             `;
 
             modalFooter.innerHTML = `<button id="saveEditBtn" class="px-4 py-2 bg-primary-blue text-white rounded-md">Guardar Alterações</button><button onclick="closeModal(null, 'modal')" class="px-4 py-2 bg-gray-300 rounded-md">Cancelar</button>`;
 
-            // --- INÍCIO DA NOVA LÓGICA DE VALIDAÇÃO DO MODAL ---
-
-            // Referências aos campos do modal
             const editStatusSelect = document.getElementById('editStatus');
             const editMotoristaInput = document.getElementById('editMotorista');
             const editHorasInput = document.getElementById('editHoras');
             const editKmInput = document.getElementById('editKm');
             const editObservacaoTextarea = document.getElementById('editObservacao');
 
-            // Função para alternar os campos com base no status
             const toggleFieldsBasedOnStatus = () => {
                 const selectedStatus = editStatusSelect.value;
-
                 if (selectedStatus === STATUSES.CANCELADO) {
-                    // Desativa campos de custo
                     editMotoristaInput.disabled = true;
                     editHorasInput.disabled = true;
                     editKmInput.disabled = true;
-                    // Torna a observação obrigatória
                     editObservacaoTextarea.required = true;
                     editObservacaoTextarea.placeholder = 'Motivo do cancelamento (obrigatório)';
-                    // Limpa valores dos campos desativados para evitar salvar dados antigos
                     editMotoristaInput.value = '';
                     editHorasInput.value = '';
                     editKmInput.value = '';
                 } else {
-                    // Ativa campos de custo
                     editMotoristaInput.disabled = false;
                     editHorasInput.disabled = false;
                     editKmInput.disabled = false;
-                    // Motorista é obrigatório (exceto se for "Aberto")
                     editMotoristaInput.required = (selectedStatus !== STATUSES.ABERTO);
-                    // Observação volta ao normal
                     editObservacaoTextarea.required = false;
                     editObservacaoTextarea.placeholder = 'Descreva a atividade ou qualquer nota relevante...';
                 }
             };
 
-            // Adiciona o listener de mudança ao dropdown de status
             editStatusSelect.addEventListener('change', toggleFieldsBasedOnStatus);
-            // Chama a função imediatamente para definir o estado inicial do modal
             toggleFieldsBasedOnStatus();
 
-            // --- FIM DA NOVA LÓGICA DE VALIDAÇÃO DO MODAL ---
-
-
-            // --- MODIFICAÇÃO NA LÓGICA DE SALVAR ---
             document.getElementById('saveEditBtn').addEventListener('click', async () => {
                 const editId = document.getElementById('editId').value;
                 const editStatus = document.getElementById('editStatus').value;
                 const editObservacao = document.getElementById('editObservacao').value.trim();
                 const editMotorista = document.getElementById('editMotorista').value;
-                const editOsLocamunck = document.getElementById('editOsLocamunck').value.trim() || null; // NOVO: Leitura do campo do modal
+                const editOsLocamunck = document.getElementById('editOsLocamunck').value.trim() || null;
 
-                // 1. NOVA VALIDAÇÃO
                 if (editStatus === STATUSES.CANCELADO) {
                     if (!editObservacao) {
                         showConfirmationModal('Campo Obrigatório', 'Para cancelar, o campo "Observação" deve ser preenchido com o motivo.', 'error');
                         return;
                     }
                 } else if (editStatus !== STATUSES.ABERTO) {
-                    // Validação antiga (para Em Execução e Encerrado)
                     if (!editMotorista) {
                         showConfirmationModal('Campo Obrigatório', 'O campo "Motorista" deve ser preenchido para guardar as alterações.', 'error');
                         return;
@@ -1355,10 +1459,8 @@ Status Atual: ${status.toUpperCase()}
                      showConfirmationModal('Data Inválida', 'Por favor, insira uma data de acionamento válida.', 'error');
                      return;
                 }
-                // Converte a data local do input para UTC antes de salvar
                 const utcDate = new Date(editDate.getUTCFullYear(), editDate.getUTCMonth(), editDate.getUTCDate());
 
-                // 2. NOVOS DADOS A SALVAR
                 let horasValue, kmValue, custoTotalValue, motoristaValue;
 
                 if (editStatus === STATUSES.CANCELADO) {
@@ -1374,7 +1476,7 @@ Status Atual: ${status.toUpperCase()}
                 }
 
                 const updatedData = {
-                    data: utcDate, // Salva a data como UTC
+                    data: utcDate,
                     status: editStatus,
                     solicitante: document.getElementById('editSolicitante').value,
                     local: document.getElementById('editLocal').value,
@@ -1382,14 +1484,13 @@ Status Atual: ${status.toUpperCase()}
                     horas: horasValue,
                     km: kmValue,
                     chamadoGLPI: document.getElementById('editChamadoGLPI').value,
-                    osLocamunck: editOsLocamunck, // NOVO: Campo adicionado
+                    osLocamunck: editOsLocamunck,
                     observacao: editObservacao || null,
                     custoTotal: custoTotalValue,
                 };
 
-                closeModal(); // Fecha o modal de edição imediatamente
+                closeModal();
 
-                // 3. NOVA LÓGICA DE CONFIRMAÇÃO (para Encerrar OU Cancelar)
                 const isFinalizing = editStatus === STATUSES.ENCERRADO || editStatus === STATUSES.CANCELADO;
                 const wasFinalized = originalStatus === STATUSES.ENCERRADO || originalStatus === STATUSES.CANCELADO;
 
@@ -1417,7 +1518,6 @@ Status Atual: ${status.toUpperCase()}
             const id = button.dataset.id;
             const acionamento = acionamentosData.find(a => a.id === id);
 
-            // MODIFICAÇÃO: Só pode deletar se estiver "Aberto".
             if (acionamento && acionamento.status !== STATUSES.ABERTO) {
                  showConfirmationModal('Ação Bloqueada', 'Só é possível eliminar acionamentos com o status "Aberto". Acionamentos em execução, encerrados ou cancelados não podem ser eliminados.', 'error');
                  return;
@@ -1425,42 +1525,31 @@ Status Atual: ${status.toUpperCase()}
             showConfirmationModal('Confirmar Eliminação?', `Tem a certeza que deseja eliminar o acionamento para o chamado ${acionamento.chamadoGLPI}?`, 'delete', () => deleteAcionamento(id));
         }
 
-        // --- FIM DAS FUNÇÕES RESTAURADAS ---
-
-        // --- NOVA FUNÇÃO ---
-        // Lida com o clique no botão de exclusão final (o ❌)
         function handleFinalDeleteClick(event) {
             const button = event.target.closest('[data-action="finalDelete"]');
             if (!button) return;
             const id = button.dataset.id;
 
-            // Armazena o ID no modal de senha e o exibe
             document.getElementById('deleteIdStorage').value = id;
-            document.getElementById('passwordInput').value = ''; // Limpa o campo
-            document.getElementById('passwordError').style.display = 'none'; // Esconde erro
+            document.getElementById('passwordInput').value = '';
+            document.getElementById('passwordError').style.display = 'none';
             passwordModal.classList.remove('hidden');
             passwordModal.classList.add('flex');
-            // Foca no campo de senha
             setTimeout(() => document.getElementById('passwordInput').focus(), 100);
         }
 
-        // --- NOVA FUNÇÃO ---
-        // Verifica a senha e executa a exclusão se correta
         function checkPasswordAndDelete() {
             const passwordInput = document.getElementById('passwordInput');
             const passwordError = document.getElementById('passwordError');
             const deleteId = document.getElementById('deleteIdStorage').value;
 
             if (passwordInput.value === DELETE_PASSWORD) {
-                // Senha correta
                 closeModal(null, 'passwordModal');
-                // Chama a função de exclusão normal
                 deleteAcionamento(deleteId);
             } else {
-                // Senha incorreta
-                passwordError.style.display = 'block'; // Mostra a mensagem de erro
-                passwordInput.value = ''; // Limpa o campo
-                passwordInput.focus(); // Coloca o foco de volta no campo
+                passwordError.style.display = 'block';
+                passwordInput.value = '';
+                passwordInput.focus();
             }
         }
 
@@ -1479,17 +1568,14 @@ Status Atual: ${status.toUpperCase()}
 
             if (filteredData.length === 0) return;
 
-            // MODIFICAÇÃO: Adicionado "OS Locamunck" ao cabeçalho
             const header = ["ID", "Data", "Solicitante", "Motorista", "Local", "Chamado GLPI", "OS Locamunck", "Km", "Horas", "Custo Total (R$)", "Status", "Observação", "UserId"];
             const csvRows = filteredData.map(a => {
                 const acionamentoDate = a.data.toDate ? a.data.toDate() : new Date(a.data);
                 const custoTotal = calcularCustoTotal(a.horas, a.km);
-                // Usa a vírgula como separador decimal para CSV em português
                 const kmValue = a.km !== null ? (a.km).toFixed(1).replace('.', ',') : '0,0';
                 const horasValue = a.horas !== null ? (a.horas).toFixed(2).replace('.', ',') : '0,00';
                 const custoTotalValue = custoTotal.toFixed(2).replace('.', ',');
 
-                // MODIFICAÇÃO: Adicionado o valor de osLocamunck
                 return [
                     `"${a.id}"`,
                     `"${formatDate(acionamentoDate)}"`,
@@ -1497,7 +1583,7 @@ Status Atual: ${status.toUpperCase()}
                     `"${a.motorista || ''}"`,
                     `"${a.local}"`,
                     `"${a.chamadoGLPI}"`,
-                    `"${a.osLocamunck || ''}"`, // Campo adicionado
+                    `"${a.osLocamunck || ''}"`,
                     `"${kmValue}"`,
                     `"${horasValue}"`,
                     `"${custoTotalValue}"`,
@@ -1506,7 +1592,6 @@ Status Atual: ${status.toUpperCase()}
                     `"${userId}"`
                 ].join(';');
             });
-            // Adiciona o BOM para garantir que caracteres especiais (UTF-8) e vírgulas sejam lidos corretamente
             const csvContent = ["\uFEFF", header.join(';'), ...csvRows].join('\n');
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement('a');
@@ -1523,34 +1608,28 @@ Status Atual: ${status.toUpperCase()}
         // --------------------------
 
         async function initializeAppLogic() {
-            // Adiciona log de debug
             if (typeof setLogLevel === 'function') {
                 setLogLevel('Debug');
             }
 
-            // As variáveis de ambiente são lidas aqui DENTRO para garantir que estejam disponíveis.
             const appId = typeof __app_id !== 'undefined' ? __app_id : null;
             let firebaseConfig = null;
             const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
             try {
-                 // Tenta fazer o parse da configuração do Firebase se ela existir.
                 if (typeof __firebase_config !== 'undefined' && __firebase_config && __firebase_config !== "{}") {
                     firebaseConfig = JSON.parse(__firebase_config);
                 }
             } catch (e) {
                 console.error("Erro ao fazer parse de __firebase_config:", e);
-                // Deixa firebaseConfig como null
             }
 
-            // Se a configuração não for encontrada ou estiver vazia/malformada, entra em MODO DE SIMULAÇÃO.
             if (!firebaseConfig || !firebaseConfig.projectId) {
                 console.warn("MODO DE SIMULAÇÃO ATIVADO: Configuração do Firebase não encontrada. Dados NÃO serão guardados.");
                 userId = 'local-user-test-id-' + (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 9));
                 userIdDisplay.textContent = userId.substring(0, 10) + '... (SIMULAÇÃO)';
-                isAuthReady = false; // Não está realmente autenticado no DB
+                isAuthReady = false; 
 
-                // Atualiza o botão para refletir o erro
                 if (submitButton) {
                     submitButton.textContent = 'Erro de Configuração';
                 }
@@ -1560,7 +1639,6 @@ Status Atual: ${status.toUpperCase()}
                 return;
             }
 
-            // --- Inicialização REAL do Firebase ---
             try {
                 const app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
@@ -1571,48 +1649,40 @@ Status Atual: ${status.toUpperCase()}
                         userId = user.uid;
                         isAuthReady = true;
                         userIdDisplay.textContent = userId;
-                        console.log(`SUCESSO AUTH: Utilizador autenticado: ${userId}`); // Log mais explícito
+                        console.log(`SUCESSO AUTH: Utilizador autenticado: ${userId}`);
 
-                        // Ativa o botão de submit APÓS a autenticação
                         if (submitButton) {
                             submitButton.disabled = false;
                             submitButton.textContent = 'Guardar Acionamento';
                         }
 
                         if (!window.firestoreListenersAttached) {
-                            // Passa o appId (que agora é o projectId) para o setup
                             setupFirestoreListeners(appId);
                             finalizeUI();
                             window.firestoreListenersAttached = true;
                         }
                     } else {
-                        // Caso a autenticação falhe ou o utilizador saia
-                        console.warn("FALHA AUTH: onAuthStateChanged - Nenhum utilizador logado."); // Log mais explícito
+                        console.warn("FALHA AUTH: onAuthStateChanged - Nenhum utilizador logado.");
                         isAuthReady = false;
                         userId = null;
                         if (submitButton) {
                             submitButton.disabled = true;
-                            submitButton.textContent = 'Falha na autenticação'; // Texto mais explícito no botão
+                            submitButton.textContent = 'Falha na autenticação';
                         }
                     }
                 });
 
-                // Tenta o login
                 if (initialAuthToken) {
                     console.log("Tentando login com Custom Token...");
                     await signInWithCustomToken(auth, initialAuthToken);
                 } else {
                     console.log("Tentando login anónimo...");
                     try {
-                        // Tenta o login anônimo
                         await signInAnonymously(auth);
-                        // Se for bem-sucedido, o onAuthStateChanged acima será disparado
                         console.log("signInAnonymously() chamado com sucesso. Aguardando onAuthStateChanged...");
                     } catch (authError) {
-                        // Erro específico do login anônimo
                         console.error("Erro CRÍTICO ao tentar login anónimo:", authError.message);
                         console.error("Código do Erro:", authError.code);
-                        // MOSTRA O ERRO NA TELA PARA O UTILIZADOR
                         showConfirmationModal('Erro de Autenticação', `Não foi possível autenticar anonimamente. Verifique os Domínios Autorizados no seu Console Firebase. <br><br>Erro: ${authError.message}`, 'error');
                         loadingOverlay.innerHTML = `<div class="p-4 text-center"><p class="text-red-600 font-semibold">Falha na Autenticação Anónima:</p><p class="text-sm text-gray-700 mt-2">${authError.message}</p></div>`;
                         if (submitButton) {
@@ -1621,7 +1691,6 @@ Status Atual: ${status.toUpperCase()}
                     }
                 }
             } catch (error) {
-                // Erro geral de inicialização (ex: API Key errada)
                 console.error("Erro CRÍTICO na inicialização do Firebase:", error);
                 loadingOverlay.innerHTML = `<div class="p-4 text-center"><p class="text-red-600 font-semibold">Falha ao iniciar a aplicação:</p><p class="text-sm text-gray-700 mt-2">Verifique a API Key. Mensagem: ${error.message}</p></div>`;
                 if (submitButton) {
@@ -1631,31 +1700,23 @@ Status Atual: ${status.toUpperCase()}
         }
 
         function setupFirestoreListeners(appId) {
-            // Validação para garantir que db está pronto
             if (!db) {
                 console.error("setupFirestoreListeners chamado sem db!");
                 return;
             }
 
-            // MUDANÇA: Usa a função getCollectionRef() para garantir consistência
-            // e apontar para a coleção pública.
             const acionamentosRef = getCollectionRef();
             if (!acionamentosRef) {
                     console.error("Falha ao obter referência da coleção em setupFirestoreListeners");
                     return;
             }
 
-            // Removido o 'orderBy' da consulta inicial.
-            // A ordenação será feita no cliente.
             const q = query(acionamentosRef);
 
             onSnapshot(q, (snapshot) => {
-                // Mapeia os dados do Firestore para o array de estado
                 acionamentosData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-                // Ordena os dados no lado do cliente
                 acionamentosData.sort((a, b) => {
-                    // Garante que temos datas válidas para comparar
                     const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : (a.data?.toDate ? a.data.toDate() : new Date(0));
                     const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : (b.data?.toDate ? b.data.toDate() : new Date(0));
                     return dateB - dateA; // Ordenação descendente (mais recente primeiro)
@@ -1663,21 +1724,14 @@ Status Atual: ${status.toUpperCase()}
 
                 console.log(`Dados atualizados: ${acionamentosData.length} acionamentos carregados.`);
 
-                // CHAMA A FUNÇÃO DE CÁLCULO GERAL (com todos os dados)
-                // É importante chamar isso antes de renderAcionamentos
                 renderTotaisGerais(acionamentosData);
-
-                // NOVO: CHAMA A FUNÇÃO DE STATUS DO CAMINHÃO
                 renderStatusAtualCaminhao(acionamentosData);
 
-                // Atualiza a UI se estiver numa das views que depende dos dados
-                // renderAcionamentos() irá calcular os totais do período filtrado
                 if (currentView === 'historico' || currentView === 'dashboard') {
                     renderAcionamentos(acionamentosData);
                 }
             }, (error) => {
                 console.error("Erro ao ouvir o Firestore:", error);
-                // Este erro é comum se o índice 'orderBy' estiver em falta.
                 showConfirmationModal('Erro de Conexão', `Não foi possível carregar os dados em tempo real: ${error.message}. Se a mensagem mencionar um índice, verifique a consola do Firebase.`, 'error');
             });
         }
@@ -1698,26 +1752,36 @@ Status Atual: ${status.toUpperCase()}
         window.closeModal = closeModal;
         window.showNotificationModal = showNotificationModal;
 
-        // MODIFICAÇÃO: Listener de cliques na lista agora inclui o handleFinalDeleteClick
+        // Listener para a GRELHA DE CARTÕES
         listaAcionamentos.addEventListener('click', (event) => {
-            handleDeleteClick(event); // Deleção normal (status Aberto)
+            handleDeleteClick(event);
             handleViewOSClick(event);
             handleEditAcionamento(event);
-            handleFinalDeleteClick(event); // Deleção final (status Encerrado/Cancelado)
+            handleFinalDeleteClick(event);
         });
 
-        // NOVO: Listener para o botão de confirmação no modal de senha
+        // NOVO: Listener para o CORPO DA TABELA
+        if (listaAcionamentosTabela) {
+            listaAcionamentosTabela.addEventListener('click', (event) => {
+                handleDeleteClick(event);
+                handleViewOSClick(event);
+                handleEditAcionamento(event);
+                handleFinalDeleteClick(event);
+            });
+        }
+
+        // Listener para o botão de confirmação no modal de senha
         const confirmPasswordDeleteBtn = document.getElementById('confirmPasswordDeleteBtn');
         if (confirmPasswordDeleteBtn) {
             confirmPasswordDeleteBtn.addEventListener('click', checkPasswordAndDelete);
         }
 
-        // NOVO: Listener para a tecla Enter no campo de senha
+        // Listener para a tecla Enter no campo de senha
         const passwordInput = document.getElementById('passwordInput');
         if (passwordInput) {
             passwordInput.addEventListener('keypress', function(event) {
                 if (event.key === 'Enter') {
-                    event.preventDefault(); // Impede o comportamento padrão (ex: submit de formulário)
+                    event.preventDefault();
                     checkPasswordAndDelete();
                 }
             });
