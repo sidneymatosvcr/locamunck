@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestão de Acionamentos Munck (Locamunck)</title>
     
-    <!-- NOVO: Script de Modo Escuro (DEVE VIR PRIMEIRO DE TUDO) -->
-    <!-- CORREÇÃO: Movido para antes do script do Tailwind CDN -->
+    <!-- 1. SCRIPT DE MODO ESCURO (CORRETO - DEVE VIR PRIMEIRO DE TUDO) -->
+    <!-- Deteta o tema salvo ou a preferência do SO e aplica a classe 'dark' ao <html> -->
     <script>
         // Deteta o tema salvo ou a preferência do SO e aplica a classe 'dark' ao <html>
         // ISTO TEM DE VIR ANTES DO TAILWIND CARREGAR, para que o JIT veja a classe 'dark'.
@@ -18,16 +18,18 @@
     </script>
     <!-- FIM DO SCRIPT DE MODO ESCURO -->
 
-    <!-- NOVO: Configuração do Tailwind (DEVE VIR ANTES de carregar o script CDN) -->
+    <!-- 2. Tailwind CSS CDN (DEVE VIR ANTES DA CONFIGURAÇÃO) -->
+    <!-- CORRIGIDO: Este script precisa ser carregado aqui -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- 3. Configuração do Tailwind (DEVE VIR DEPOIS DO SCRIPT CDN) -->
+    <!-- CORRIGIDO: Este script agora pode configurar o objeto 'tailwind' que já existe -->
     <script>
         tailwind.config = {
             darkMode: 'class', // Habilita a estratégia de classe para o modo escuro
         }
     </script>
 
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
     <!-- Inter Font -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     
@@ -139,9 +141,71 @@
             <svg class="animate-spin -ml-1 mr-3 h-8 w-8 primary-blue dark:text-blue-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8
- 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
             <p class="mt-4 text-lg primary-blue dark:text-blue-300">Carregando dados e autenticando...</p>
+        </div>
+    </div>
+
+    <!-- NOVO: Container de Login -->
+    <div id="loginContainer" class="min-h-screen flex items-center justify-center p-4 bg-gray-100 dark:bg-gray-900 hidden">
+        <div class="w-full max-w-md bg-white dark:bg-gray-800 rounded-lg shadow-2xl p-8">
+            <img src="https://viacristais.com.br/wp-content/themes/viacristais/resources/images/logo-topo.png" alt="Logo Via Cristais" class="h-24 mx-auto mb-6" onerror="this.onerror=null;this.style.display='none';">
+            
+            <!-- TÍTULO ADICIONADO -->
+            <h1 class="text-xl text-center font-bold text-gray-700 dark:text-gray-200 mb-4 -mt-2">
+                Gestão de Acionamentos Munck - Locamunck
+            </h1>
+            <!-- FIM TÍTULO -->
+            
+            <!-- TABS -->
+            <div class="mb-4 border-b border-gray-200 dark:border-gray-700">
+                <nav class="flex space-x-1" aria-label="Tabs">
+                    <button id="tabLogin" class="px-4 py-2 font-medium text-sm rounded-t-lg">Entrar</button>
+                    <button id="tabRegister" class="px-4 py-2 font-medium text-sm rounded-t-lg">Registar</button>
+                </nav>
+            </div>
+
+            <!-- Formulário de Login -->
+            <form id="loginForm">
+                <div class="space-y-4">
+                    <div>
+                        <label for="loginEmail" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
+                        <input type="email" id="loginEmail" required class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 shadow-sm focus:border-primary-blue focus:ring-primary-blue p-2">
+                    </div>
+                    <div>
+                        <label for="loginPassword" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Senha</label>
+                        <input type="password" id="loginPassword" required class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 shadow-sm focus:border-primary-blue focus:ring-primary-blue p-2">
+                    </div>
+                </div>
+                <p id="authError" class="text-red-500 text-sm mt-4 hidden"></p>
+                <div class="mt-6">
+                    <button type="submit" id="loginButton" class="w-full bg-primary-blue text-white py-2 px-6 rounded-md hover-dark-blue transition duration-150 ease-in-out font-semibold shadow-md">
+                        Entrar
+                    </button>
+                </div>
+            </form>
+
+            <!-- Formulário de Registo -->
+            <form id="registerForm" class="hidden">
+                <div class="space-y-4">
+                    <div>
+                        <label for="registerEmail" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
+                        <input type="email" id="registerEmail" required class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 shadow-sm focus:border-primary-blue focus:ring-primary-blue p-2">
+                    </div>
+                    <div>
+                        <label for="registerPassword" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Senha (mínimo 6 caracteres)</label>
+                        <input type="password" id="registerPassword" required minlength="6" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 shadow-sm focus:border-primary-blue focus:ring-primary-blue p-2">
+                    </div>
+                </div>
+                 <!-- MODIFICADO: Mensagem de erro/sucesso para registo -->
+                 <p id="registerError" class="text-sm mt-4 hidden"></p>
+                <div class="mt-6">
+                    <button type="submit" id="registerButton" class="w-full bg-green-600 text-white py-2 px-6 rounded-md hover:bg-green-700 transition duration-150 ease-in-out font-semibold shadow-md">
+                        Criar Conta
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -187,10 +251,18 @@
                 </button>
             </div>
             
+            <!-- NOVO: Botão de Logout -->
+            <div class="p-4 border-t border-gray-200 dark:border-gray-700">
+                <button id="logoutButton" class="w-full flex items-center justify-center px-4 py-2 rounded-lg text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-700 transition duration-150">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                    <span class="ml-2">Sair (Logout)</span>
+                </button>
+            </div>
+
             <!-- ID do Utilizador -->
             <div class="p-4 text-center border-t border-gray-200 dark:border-gray-700">
                 <div class="text-sm font-medium text-gray-500 dark:text-gray-400">
-                    ID do Utilizador: <span id="userIdDisplay" class="font-mono text-xs bg-gray-100 dark:bg-gray-700 p-1 rounded"></span>
+                    Utilizador: <span id="userIdDisplay" class="font-mono text-xs bg-gray-100 dark:bg-gray-700 p-1 rounded"></span>
                 </div>
             </div>
         </aside>
@@ -200,8 +272,8 @@
             <!-- NOVO: Cabeçalho do Conteúdo (Apenas Título) -->
             <header class="bg-white dark:bg-gray-800 shadow-sm p-4 z-0">
                  <h1 class="text-2xl md:text-3xl font-bold primary-blue dark:text-gray-100">
-                    Gestão de Acionamentos Munck - Locamunck
-                </h1>
+                     Gestão de Acionamentos Munck - Locamunck
+                 </h1>
             </header>
             
             <!-- Conteúdo Principal (onde as views são trocadas) -->
@@ -246,8 +318,8 @@
                                     <option value="" disabled selected>Selecione o Local</option>
                                 </select>
                             </div>
-                            <!-- Chamado GLPI -->
-                            <div>
+                             <!-- Chamado GLPI -->
+                             <div>
                                 <label for="chamadoGLPI" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Chamado GLPI</label>
                                 <input type="text" id="chamadoGLPI" name="chamadoGLPI" required class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 shadow-sm focus:border-primary-blue focus:ring-primary-blue p-2" placeholder="Ex: C0000000">
                             </div>
@@ -257,7 +329,7 @@
                                 <input type="text" id="osLocamunck" name="osLocamunck" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 shadow-sm focus:border-primary-blue focus:ring-primary-blue p-2" placeholder="Opcional">
                             </div>
                         </div>
-
+                        
                         <!-- CAMPO: Observação -->
                         <div class="mt-6">
                             <label for="observacao" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Observação (Opcional)</label>
@@ -425,11 +497,11 @@
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
-
+            
             <div id="modalBody" class="p-5">
                 <!-- Conteúdo dinâmico aqui (OS ou Formulário de Edição) -->
             </div>
-
+            
             <div id="modalFooter" class="p-5 bg-gray-50 dark:bg-gray-700/50 flex justify-end space-x-3">
                 <!-- Botões dinâmicos aqui (o botão Fechar padrão foi movido para o JS) -->
             </div>
@@ -519,7 +591,8 @@
     <script type="module">
 
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        // MODIFICADO: Adicionado 'sendEmailVerification' e removidos 'signInAnonymously' e 'signInWithCustomToken'
+        import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, sendEmailVerification } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, orderBy, serverTimestamp, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- Variáveis de Estado ---
@@ -530,6 +603,7 @@
         let currentMonthFilter = new Date().toISOString().substring(0, 7); // yyyy-mm
         let isAuthReady = false;
         let historicoViewMode = 'cards'; // 'cards' ou 'lista'
+        let firestoreUnsubscribe = null; // NOVO: Para desligar o listener no logout
 
         // --------------------------
         // Constantes e Regras de Negócio
@@ -616,6 +690,17 @@
         const modalBody = document.getElementById('modalBody');
         const modalFooter = document.getElementById('modalFooter');
         const submitButton = document.getElementById('submitButton');
+        // NOVO: Elementos do Login
+        const loginContainer = document.getElementById('loginContainer');
+        const loginForm = document.getElementById('loginForm');
+        const registerForm = document.getElementById('registerForm');
+        const authError = document.getElementById('authError');
+        const registerError = document.getElementById('registerError');
+        const loginButton = document.getElementById('loginButton');
+        const registerButton = document.getElementById('registerButton');
+        const tabLogin = document.getElementById('tabLogin');
+        const tabRegister = document.getElementById('tabRegister');
+        const logoutButton = document.getElementById('logoutButton');
         // NOVO: Elementos do Modo Escuro
         const darkModeToggle = document.getElementById('darkModeToggle');
         const iconSun = document.getElementById('icon-sun');
@@ -729,8 +814,8 @@
             initializeSolicitantesDropdowns();
             initializeMonthFilter();
             initializeDarkModeToggle(); // Inicializa o botão de modo escuro
-            loadingOverlay.style.display = 'none';
-            appContainer.style.display = 'flex'; // Alterado de 'block' para 'flex'
+            // REMOVIDO: loadingOverlay.style.display = 'none';
+            // REMOVIDO: appContainer.style.display = 'flex';
             switchView(currentView);
         }
 
@@ -1347,24 +1432,24 @@ ${observacao}
 ID do Registo: ${acionamento.id}
 Status Atual: ${status.toUpperCase()}
 1. INFORMAÇÕES BÁSICAS:
-   Data do Acionamento: ${formatDate(dataAcionamento)}
-   Solicitante: ${acionamento.solicitante}
-   Motorista: ${acionamento.motorista || 'N/A'}
-   Local: ${acionamento.local}
-   Chamado GLPI: ${acionamento.chamadoGLPI}
-   OS Locamunck: ${osLocamunck}
+    Data do Acionamento: ${formatDate(dataAcionamento)}
+    Solicitante: ${acionamento.solicitante}
+    Motorista: ${acionamento.motorista || 'N/A'}
+    Local: ${acionamento.local}
+    Chamado GLPI: ${acionamento.chamadoGLPI}
+    OS Locamunck: ${osLocamunck}
 2. DADOS DE CUSTO:
-   Tempo de Serviço: ${(horas).toFixed(2)} Horas
-   Km Deslocamento: ${(km).toFixed(1)} Km
+    Tempo de Serviço: ${(horas).toFixed(2)} Horas
+    Km Deslocamento: ${(km).toFixed(1)} Km
 3. CÁLCULO FINANCEIRO:
-   Custo Horas (${formatCurrency(HOUR_RATE)}/h): ${formatCurrency(custoHoras)}
-   Custo Km (${formatCurrency(KM_RATE)}/km): ${formatCurrency(custoKm)}
-   --------------------------------------------------
-   CUSTO TOTAL: ${formatCurrency(custoTotal)}
+    Custo Horas (${formatCurrency(HOUR_RATE)}/h): ${formatCurrency(custoHoras)}
+    Custo Km (${formatCurrency(KM_RATE)}/km): ${formatCurrency(custoKm)}
+    --------------------------------------------------
+    CUSTO TOTAL: ${formatCurrency(custoTotal)}
 4. OBSERVAÇÕES:
-   ${observacao}
+    ${observacao}
 5. INFORMAÇÕES DE CONTACTO:
-   E-mail para Notificação: ${NOTIFICATION_EMAIL}
+    E-mail para Notificação: ${NOTIFICATION_EMAIL}
 ------------------------------------------------------
 [FIM DA OS]`;
         }
@@ -1495,9 +1580,9 @@ Status Atual: ${status.toUpperCase()}
 
                 const editDate = new Date(document.getElementById('editData').value);
                  if (isNaN(editDate.getTime())) {
-                     showConfirmationModal('Data Inválida', 'Por favor, insira uma data de acionamento válida.', 'error');
-                     return;
-                }
+                      showConfirmationModal('Data Inválida', 'Por favor, insira uma data de acionamento válida.', 'error');
+                      return;
+                 }
                 const utcDate = new Date(editDate.getUTCFullYear(), editDate.getUTCMonth(), editDate.getUTCDate());
 
                 let horasValue, kmValue, custoTotalValue, motoristaValue;
@@ -1633,14 +1718,14 @@ Status Atual: ${status.toUpperCase()}
         }
 
         // --------------------------
-        // Lógica de Inicialização e Auth
+        // Lógica de Inicialização e Auth (MODIFICADA)
         // --------------------------
 
         async function initializeAppLogic() {
             if (typeof setLogLevel === 'function') setLogLevel('Debug');
             const appId = typeof __app_id !== 'undefined' ? __app_id : null;
             let firebaseConfig = null;
-            const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+            
             try {
                 if (typeof __firebase_config !== 'undefined' && __firebase_config && __firebase_config !== "{}") {
                     firebaseConfig = JSON.parse(__firebase_config);
@@ -1650,13 +1735,12 @@ Status Atual: ${status.toUpperCase()}
             }
 
             if (!firebaseConfig || !firebaseConfig.projectId) {
-                console.warn("MODO DE SIMULAÇÃO ATIVADO: Configuração do Firebase não encontrada. Dados NÃO serão guardados.");
-                userId = 'local-user-test-id-' + (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 9));
-                userIdDisplay.textContent = userId.substring(0, 10) + '... (SIMULAÇÃO)';
-                isAuthReady = false; 
-                if (submitButton) submitButton.textContent = 'Erro de Configuração';
-                finalizeUI();
-                showConfirmationModal('Modo de Simulação', 'Nenhum dado será guardado. A aplicação está à espera da Configuração do Firebase para começar a funcionar.', 'error');
+                console.warn("MODO DE SIMULAÇÃO ATIVADO: Configuração do Firebase não encontrada.");
+                loadingOverlay.style.display = 'none';
+                loginContainer.style.display = 'flex'; // Alterado para 'flex'
+                authError.textContent = 'Erro: Configuração do Firebase não encontrada.';
+                authError.classList.remove('hidden');
+                toggleAuthForms('login'); // Mostra o form de login
                 return;
             }
 
@@ -1665,52 +1749,75 @@ Status Atual: ${status.toUpperCase()}
                 db = getFirestore(app);
                 auth = getAuth(app);
 
+                // onAuthStateChanged agora controla se o Login ou o App são mostrados.
                 onAuthStateChanged(auth, (user) => {
-                    if (user) {
+                    // MODIFICAÇÃO: Apenas continua se o utilizador existir E o email estiver verificado
+                    if (user && user.emailVerified) {
+                        // --- UTILIZADOR AUTENTICADO E VERIFICADO ---
                         userId = user.uid;
                         isAuthReady = true;
-                        userIdDisplay.textContent = userId;
+                        userIdDisplay.textContent = user.email || userId.substring(0, 10);
                         console.log(`SUCESSO AUTH: Utilizador autenticado: ${userId}`);
+                        
                         if (submitButton) {
                             submitButton.disabled = false;
                             submitButton.textContent = 'Guardar Acionamento';
                         }
+                        
                         if (!window.firestoreListenersAttached) {
                             setupFirestoreListeners(appId);
-                            finalizeUI();
                             window.firestoreListenersAttached = true;
                         }
+                        
+                        finalizeUI(); 
+                        
+                        appContainer.style.display = 'flex';
+                        loginContainer.style.display = 'none';
+                        loadingOverlay.style.display = 'none';
+
+                    } else if (user && !user.emailVerified) {
+                         // --- UTILIZADOR AUTENTICADO MAS NÃO VERIFICADO ---
+                         console.warn("Utilizador logado mas email não verificado. A deslogar.");
+                         // Mostra o erro no ecrã de login
+                         authError.textContent = 'Email não verificado! Por favor, clique no link enviado para o seu email.';
+                         authError.classList.remove('hidden');
+                         signOut(auth); // Força o logout para disparar o 'else'
+                    
                     } else {
-                        console.warn("FALHA AUTH: onAuthStateChanged - Nenhum utilizador logado.");
+                        // --- UTILIZADOR NÃO AUTENTICADO ---
+                        console.warn("Nenhum utilizador logado. Mostrando ecrã de login.");
                         isAuthReady = false;
                         userId = null;
+                        
+                        appContainer.style.display = 'none';
+                        loginContainer.style.display = 'flex';
+                        loadingOverlay.style.display = 'none';
+
                         if (submitButton) {
                             submitButton.disabled = true;
-                            submitButton.textContent = 'Falha na autenticação';
+                            submitButton.textContent = 'Aguardando autenticação...';
                         }
+                        
+                        acionamentosData = [];
+                        if (firestoreUnsubscribe) {
+                            console.log("Desligando listener do Firestore.");
+                            firestoreUnsubscribe();
+                            firestoreUnsubscribe = null;
+                        }
+                        renderAcionamentos(acionamentosData); 
+                        
+                        window.firestoreListenersAttached = false;
+                        toggleAuthForms('login');
                     }
                 });
 
-                if (initialAuthToken) {
-                    console.log("Tentando login com Custom Token...");
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } else {
-                    console.log("Tentando login anónimo...");
-                    try {
-                        await signInAnonymously(auth);
-                        console.log("signInAnonymously() chamado com sucesso. Aguardando onAuthStateChanged...");
-                    } catch (authError) {
-                        console.error("Erro CRÍTICO ao tentar login anónimo:", authError.message);
-                        console.error("Código do Erro:", authError.code);
-                        showConfirmationModal('Erro de Autenticação', `Não foi possível autenticar anonimamente. Verifique os Domínios Autorizados no seu Console Firebase. <br><br>Erro: ${authError.message}`, 'error');
-                        loadingOverlay.innerHTML = `<div class="p-4 text-center"><p class="text-red-600 font-semibold">Falha na Autenticação Anónima:</p><p class="text-sm text-gray-700 mt-2">${authError.message}</p></div>`;
-                        if (submitButton) submitButton.textContent = 'Falha no Auth';
-                    }
-                }
             } catch (error) {
                 console.error("Erro CRÍTICO na inicialização do Firebase:", error);
-                loadingOverlay.innerHTML = `<div class="p-4 text-center"><p class="text-red-600 font-semibold">Falha ao iniciar a aplicação:</p><p class="text-sm text-gray-700 mt-2">Verifique a API Key. Mensagem: ${error.message}</p></div>`;
-                if (submitButton) submitButton.textContent = 'Falha no Firebase';
+                loadingOverlay.style.display = 'none';
+                loginContainer.style.display = 'flex';
+                authError.textContent = `Erro crítico ao iniciar: ${error.message}`;
+                authError.classList.remove('hidden');
+                toggleAuthForms('login');
             }
         }
 
@@ -1721,12 +1828,13 @@ Status Atual: ${status.toUpperCase()}
             }
             const acionamentosRef = getCollectionRef();
             if (!acionamentosRef) {
-                    console.error("Falha ao obter referência da coleção em setupFirestoreListeners");
-                    return;
+                   console.error("Falha ao obter referência da coleção em setupFirestoreListeners");
+                   return;
             }
             const q = query(acionamentosRef);
 
-            onSnapshot(q, (snapshot) => {
+            // Armazena a função de unsubscribe
+            firestoreUnsubscribe = onSnapshot(q, (snapshot) => {
                 acionamentosData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 acionamentosData.sort((a, b) => {
                     const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : (a.data?.toDate ? a.data.toDate() : new Date(0));
@@ -1746,7 +1854,111 @@ Status Atual: ${status.toUpperCase()}
         }
 
         // --------------------------
-        // Event Listeners
+        // Funções de Auth (MODIFICADAS)
+        // --------------------------
+
+        function toggleAuthForms(view) {
+            if (view === 'login') {
+                loginForm.classList.remove('hidden');
+                registerForm.classList.add('hidden');
+                tabLogin.classList.add('bg-gray-100', 'dark:bg-gray-700', 'text-primary-blue');
+                tabLogin.classList.remove('text-gray-500', 'dark:text-gray-400');
+                tabRegister.classList.add('text-gray-500', 'dark:text-gray-400');
+                tabRegister.classList.remove('bg-gray-100', 'dark:bg-gray-700', 'text-primary-blue');
+            } else {
+                loginForm.classList.add('hidden');
+                registerForm.classList.remove('hidden');
+                tabRegister.classList.add('bg-gray-100', 'dark:bg-gray-700', 'text-primary-blue');
+                tabRegister.classList.remove('text-gray-500', 'dark:text-gray-400');
+                tabLogin.classList.add('text-gray-500', 'dark:text-gray-400');
+                tabLogin.classList.remove('bg-gray-100', 'dark:bg-gray-700', 'text-primary-blue');
+            }
+            authError.classList.add('hidden');
+            registerError.classList.add('hidden');
+            registerError.classList.remove('text-green-600'); // Garante que a cor de sucesso saia
+            registerError.classList.add('text-red-500'); // Volta ao padrão de erro
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            loginButton.disabled = true;
+            loginButton.textContent = 'A entrar...';
+            authError.classList.add('hidden');
+
+            try {
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                
+                // MODIFICAÇÃO: Verifica se o email foi confirmado
+                if (userCredential.user && !userCredential.user.emailVerified) {
+                    authError.textContent = 'Email não verificado! Por favor, clique no link enviado para o seu email.';
+                    authError.classList.remove('hidden');
+                    await signOut(auth); // Desloga o utilizador
+                }
+                // Se verificado, o onAuthStateChanged tratará do resto
+                
+            } catch (error) {
+                if (error.code === 'auth/invalid-credential') {
+                     authError.textContent = 'Email ou senha inválidos.';
+                } else {
+                     authError.textContent = `Erro ao entrar: ${error.message}`;
+                }
+                authError.classList.remove('hidden');
+            } finally {
+                loginButton.disabled = false;
+                loginButton.textContent = 'Entrar';
+            }
+        }
+
+        async function handleRegister(e) {
+            e.preventDefault();
+            const email = document.getElementById('registerEmail').value;
+            const password = document.getElementById('registerPassword').value;
+            registerButton.disabled = true;
+            registerButton.textContent = 'A registar...';
+            registerError.classList.add('hidden'); // Esconde erros antigos
+            registerError.classList.remove('text-red-500'); // Remove cor de erro
+            registerError.classList.add('text-green-600', 'dark:text-green-400'); // Adiciona cor de sucesso
+
+            try {
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                
+                // NOVO: Enviar email de verificação
+                await sendEmailVerification(userCredential.user);
+                
+                // NOVO: Deslogar o utilizador para forçar a verificação
+                await signOut(auth);
+
+                // NOVO: Mostrar mensagem de sucesso
+                registerError.textContent = 'Registo concluído! Por favor, verifique o seu email para ativar a conta.';
+                registerError.classList.remove('hidden');
+                
+                registerForm.reset();
+
+            } catch (error) {
+                registerError.classList.add('text-red-500'); // Garante cor de erro
+                registerError.classList.remove('text-green-600', 'dark:text-green-400');
+                registerError.textContent = `Erro ao registar: ${error.message}`;
+                registerError.classList.remove('hidden');
+            } finally {
+                registerButton.disabled = false;
+                registerButton.textContent = 'Criar Conta';
+            }
+        }
+
+        async function handleLogout() {
+            try {
+                await signOut(auth);
+                // onAuthStateChanged tratará do resto
+            } catch (error) {
+                console.error("Erro ao sair:", error);
+            }
+        }
+
+
+        // --------------------------
+        // Event Listeners (MODIFICADO)
         // --------------------------
 
         selectMonthFilter.addEventListener('change', (event) => {
@@ -1796,7 +2008,13 @@ Status Atual: ${status.toUpperCase()}
             });
         }
 
+        // NOVO: Listeners para Auth
+        loginForm.addEventListener('submit', handleLogin);
+        registerForm.addEventListener('submit', handleRegister);
+        logoutButton.addEventListener('click', handleLogout);
+        tabLogin.addEventListener('click', () => toggleAuthForms('login'));
+        tabRegister.addEventListener('click', () => toggleAuthForms('register'));
+
     </script>
 </body>
 </html>
-
