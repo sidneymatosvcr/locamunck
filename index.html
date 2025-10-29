@@ -122,7 +122,6 @@
             background-color: #374151; /* dark:bg-gray-700 */
         }
 
-
         /* Estilo para a mensagem de erro no modal de senha */
         #passwordError {
             display: none; /* Escondido por padrão */
@@ -131,6 +130,29 @@
         /* Estilos para o botão de toggle ativo/inativo */
         .toggle-btn {
             transition: background-color 0.2s ease, color 0.2s ease;
+        }
+
+        /* NOVO: Estilos para ordenação da tabela */
+        .sortable-header {
+            cursor: pointer;
+            user-select: none;
+            transition: background-color 0.2s ease;
+        }
+        .sortable-header:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+        html.dark .sortable-header:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+        .sortable-header.active {
+            background-color: rgba(15, 44, 103, 0.1);
+        }
+        html.dark .sortable-header.active {
+            background-color: rgba(15, 44, 103, 0.3);
+        }
+        .sort-indicator {
+            margin-left: 4px;
+            opacity: 0.6;
         }
     </style>
 </head>
@@ -387,9 +409,16 @@
                         <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 table-responsive">
                             <thead class="bg-gray-50 dark:bg-gray-700">
                                 <tr>
-                                    <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Data</th>
-                                    <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Solicitante</th>
-                                    <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Local</th>
+                                    <!-- NOVO: Cabeçalhos clicáveis para ordenação -->
+                                    <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider sortable-header" data-sort="data">
+                                        Data <span class="sort-indicator">↕</span>
+                                    </th>
+                                    <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider sortable-header" data-sort="solicitante">
+                                        Solicitante <span class="sort-indicator">↕</span>
+                                    </th>
+                                    <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider sortable-header" data-sort="local">
+                                        Local <span class="sort-indicator">↕</span>
+                                    </th>
                                     <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Motorista</th>
                                     <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Chamado GLPI</th>
                                     <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">OS Locamunck</th>
@@ -604,6 +633,10 @@
         let isAuthReady = false;
         let historicoViewMode = 'cards'; // 'cards' ou 'lista'
         let firestoreUnsubscribe = null; // NOVO: Para desligar o listener no logout
+        
+        // NOVO: Variáveis para ordenação
+        let currentSortField = 'data'; // Campo padrão de ordenação
+        let currentSortDirection = 'desc'; // Direção padrão: decrescente (mais recente primeiro)
 
         // --------------------------
         // Constantes e Regras de Negócio
@@ -738,6 +771,65 @@
             return collection(db, 'artifacts', appId, 'public', 'data', 'acionamentos');
         }
 
+        // NOVO: Função para ordenar dados
+        function sortAcionamentos(data, field, direction) {
+            return [...data].sort((a, b) => {
+                let valueA, valueB;
+                
+                // Obter os valores para comparação baseado no campo
+                switch (field) {
+                    case 'data':
+                        valueA = a.data?.toDate ? a.data.toDate().getTime() : new Date(a.data).getTime();
+                        valueB = b.data?.toDate ? b.data.toDate().getTime() : new Date(b.data).getTime();
+                        break;
+                    case 'solicitante':
+                        valueA = a.solicitante?.toLowerCase() || '';
+                        valueB = b.solicitante?.toLowerCase() || '';
+                        break;
+                    case 'local':
+                        valueA = a.local?.toLowerCase() || '';
+                        valueB = b.local?.toLowerCase() || '';
+                        break;
+                    default:
+                        valueA = a[field] || '';
+                        valueB = b[field] || '';
+                }
+
+                // Comparar os valores
+                let result = 0;
+                if (typeof valueA === 'string' && typeof valueB === 'string') {
+                    result = valueA.localeCompare(valueB);
+                } else {
+                    result = valueA < valueB ? -1 : valueA > valueB ? 1 : 0;
+                }
+
+                // Aplicar direção (asc ou desc)
+                return direction === 'desc' ? -result : result;
+            });
+        }
+
+        // NOVO: Função para atualizar indicadores de ordenação
+        function updateSortIndicators() {
+            // Remove classes ativas de todos os cabeçalhos
+            document.querySelectorAll('.sortable-header').forEach(header => {
+                header.classList.remove('active');
+                const indicator = header.querySelector('.sort-indicator');
+                if (indicator) {
+                    indicator.textContent = '↕';
+                }
+            });
+
+            // Ativa o cabeçalho atual e atualiza o indicador
+            const activeHeader = document.querySelector(`.sortable-header[data-sort="${currentSortField}"]`);
+            if (activeHeader) {
+                activeHeader.classList.add('active');
+                const indicator = activeHeader.querySelector('.sort-indicator');
+                if (indicator) {
+                    indicator.textContent = currentSortDirection === 'asc' ? '↑' : '↓';
+                }
+            }
+        }
+
         // --------------------------
         // Funções de Inicialização UI
         // --------------------------
@@ -805,6 +897,28 @@
             });
         }
 
+        // NOVO: Função para inicializar ordenação da tabela
+        function initializeTableSorting() {
+            document.querySelectorAll('.sortable-header').forEach(header => {
+                header.addEventListener('click', () => {
+                    const field = header.dataset.sort;
+                    
+                    // Se clicar no mesmo campo, inverte a direção
+                    if (field === currentSortField) {
+                        currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+                    } else {
+                        // Se clicar em campo diferente, define como ascendente
+                        currentSortField = field;
+                        currentSortDirection = 'asc';
+                    }
+                    
+                    // Atualiza os indicadores e re-renderiza
+                    updateSortIndicators();
+                    renderAcionamentos(acionamentosData);
+                });
+            });
+        }
+
         function finalizeUI() {
             const dataInput = document.getElementById('data');
             if (dataInput) {
@@ -814,6 +928,8 @@
             initializeSolicitantesDropdowns();
             initializeMonthFilter();
             initializeDarkModeToggle(); // Inicializa o botão de modo escuro
+            initializeTableSorting(); // NOVO: Inicializa a ordenação da tabela
+            updateSortIndicators(); // NOVO: Atualiza indicadores iniciais
             // REMOVIDO: loadingOverlay.style.display = 'none';
             // REMOVIDO: appContainer.style.display = 'flex';
             switchView(currentView);
@@ -960,7 +1076,10 @@
                 return acionamentoMonth === currentMonthFilter;
             });
 
-            filteredData.forEach(acionamento => {
+            // NOVO: Aplica ordenação aos dados filtrados
+            const sortedData = sortAcionamentos(filteredData, currentSortField, currentSortDirection);
+
+            sortedData.forEach(acionamento => {
                 const custoTotal = calcularCustoTotal(acionamento.horas || 0, acionamento.km || 0);
                 totalHoras += (acionamento.horas || 0) * HOUR_RATE;
                 totalKm += (acionamento.km || 0) * KM_RATE;
@@ -968,7 +1087,7 @@
             });
 
             if (historicoViewMode === 'cards') {
-                const htmlCards = filteredData.map(acionamento => {
+                const htmlCards = sortedData.map(acionamento => {
                     const acionamentoDate = acionamento.data.toDate ? acionamento.data.toDate() : new Date(acionamento.data);
                     const horasDisplay = acionamento.horas !== null ? (acionamento.horas).toFixed(2) : 'N/A';
                     const kmDisplay = acionamento.km !== null ? (acionamento.km).toFixed(1) : 'N/A';
@@ -1059,7 +1178,7 @@
 
             } else {
                 // MODO LISTA (TABELA)
-                const htmlLista = filteredData.map(acionamento => {
+                const htmlLista = sortedData.map(acionamento => {
                     const acionamentoDate = acionamento.data.toDate ? acionamento.data.toDate() : new Date(acionamento.data);
                     const horasDisplay = acionamento.horas !== null ? (acionamento.horas).toFixed(2) : 'N/A';
                     const kmDisplay = acionamento.km !== null ? (acionamento.km).toFixed(1) : 'N/A';
@@ -1836,10 +1955,11 @@ Status Atual: ${status.toUpperCase()}
             // Armazena a função de unsubscribe
             firestoreUnsubscribe = onSnapshot(q, (snapshot) => {
                 acionamentosData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                // NOVO: Ordenação automática por data (mais recente primeiro)
                 acionamentosData.sort((a, b) => {
-                    const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : (a.data?.toDate ? a.data.toDate() : new Date(0));
-                    const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : (b.data?.toDate ? b.data.toDate() : new Date(0));
-                    return dateB - dateA;
+                    const dateA = a.data?.toDate ? a.data.toDate() : (a.data ? new Date(a.data) : new Date(0));
+                    const dateB = b.data?.toDate ? b.data.toDate() : (b.data ? new Date(b.data) : new Date(0));
+                    return dateB - dateA; // Decrescente (mais recente primeiro)
                 });
                 console.log(`Dados atualizados: ${acionamentosData.length} acionamentos carregados.`);
                 renderTotaisGerais(acionamentosData);
